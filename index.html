@@ -1,0 +1,333 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="zh-Hant"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;旅行公數易 (HKD Base)&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/vue@3/dist/vue.global.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body class="bg-gray-100 min-h-screen pb-10"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-xl relative"&gt;</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;header class="bg-blue-600 text-white p-4 sticky top-0 z-10 shadow"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;h1 class="text-xl font-bold"&gt;&lt;i class="fas fa-plane-departure mr-2"&gt;&lt;/i&gt;旅行公數易&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;p class="text-xs opacity-80 mt-1"&gt;即時匯率 • 港幣結算&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="p-4 space-y-6"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;section v-if="users.length === 0 || showSettings" class="bg-blue-50 p-4 rounded-lg border border-blue-100"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 class="font-bold text-blue-800 mb-2"&gt;第1步：加入旅伴&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="flex gap-2 mb-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;input v-model="newUser" @keyup.enter="addUser" type="text" placeholder="輸入名 (e.g.明明)" class="flex-1 border p-2 rounded"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button @click="addUser" class="bg-blue-600 text-white px-4 rounded"&gt;加入&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="flex flex-wrap gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span v-for="(user, index) in users" :key="index" class="bg-white px-3 py-1 rounded-full shadow text-sm flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{{ user }}<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button @click="removeUser(index)" class="text-red-400 hover:text-red-600"&gt;×&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button v-if="users.length &gt; 0" @click="showSettings = false" class="w-full mt-3 text-sm text-gray-500 underline"&gt;收埋設定&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;section class="bg-white border rounded-lg p-4 shadow-sm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 class="font-bold text-gray-800 mb-3 border-b pb-2"&gt;記一筆數&lt;/h2&gt;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="space-y-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;input v-model="newItem" type="text" placeholder="消費項目 (e.g. 晚餐)" class="w-full border p-2 rounded"&gt;</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="flex gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;select v-model="selectedCurrency" @change="fetchRate" class="border p-2 rounded bg-gray-50 w-1/3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="HKD"&gt;HKD&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="JPY"&gt;JPY (日元)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="TWD"&gt;TWD (台幣)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="KRW"&gt;KRW (韓圜)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="THB"&gt;THB (泰銖)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="EUR"&gt;EUR (歐羅)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="GBP"&gt;GBP (英鎊)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;option value="USD"&gt;USD (美金)&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input v-model.number="newAmount" type="number" placeholder="金額" class="flex-1 border p-2 rounded"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="text-xs text-gray-500 flex justify-between items-center bg-gray-50 p-2 rounded"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;span&gt;匯率: 1 {{selectedCurrency}} = {{ currentRate }} HKD&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button @click="fetchRate" class="text-blue-500"&gt;更新匯率&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="grid grid-cols-2 gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;label class="text-xs font-bold text-gray-500 block mb-1"&gt;邊個畀錢?&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;select v-model="payer" class="w-full border p-2 rounded"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;option v-for="u in users" :value="u"&gt;{{ u }}&lt;/option&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/select&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;label class="text-xs font-bold text-gray-500 block mb-1"&gt;邊個有份?&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="h-24 overflow-y-auto border rounded p-2 text-sm bg-gray-50"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div v-for="u in users" :key="u" class="flex items-center gap-2 mb-1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;input type="checkbox" :value="u" v-model="involvedUsers" :id="'inv-'+u"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                                </span>&lt;label :for="'inv-'+u"&gt;{{ u }}&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button @click="addExpense" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow mt-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;i class="fas fa-plus-circle mr-1"&gt;&lt;/i&gt; 加入帳單</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;section v-if="expenses.length &gt; 0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h3 class="font-bold text-gray-700 mb-2"&gt;消費記錄 ({{ expenses.length }})&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="space-y-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div v-for="(exp, idx) in expenses" :key="idx" class="bg-white p-3 rounded shadow-sm border-l-4 border-blue-400 flex justify-between items-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="font-bold"&gt;{{ exp.item }}&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div class="text-xs text-gray-500"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>{{ exp.payer }} 畀咗 {{ exp.originalCurrency }} {{ exp.originalAmount }}</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>&lt;br&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>(約 HK${{ exp.hkdAmount.toFixed(1) }}) • {{ exp.involved.length }}人分</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button @click="removeExpense(idx)" class="text-red-300 hover:text-red-500 px-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;i class="fas fa-trash"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/section&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;section v-if="expenses.length &gt; 0" class="bg-gray-800 text-white p-4 rounded-lg shadow-lg"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 class="font-bold text-lg mb-4 flex justify-between items-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>結算方案</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;span class="text-xs font-normal bg-gray-700 px-2 py-1 rounded"&gt;總消費: HK${{ totalSpent.toFixed(0) }}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/h2&gt;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div v-if="settlements.length === 0" class="text-center text-gray-400 py-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>暫時冇人欠人錢！</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div v-else class="space-y-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div v-for="(s, i) in settlements" :key="i" class="flex items-center justify-between bg-gray-700 p-3 rounded"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;span class="font-bold text-red-300"&gt;{{ s.from }}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;i class="fas fa-arrow-right text-gray-500"&gt;&lt;/i&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>&lt;span class="font-bold text-green-300"&gt;{{ s.to }}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;span class="font-mono text-xl text-yellow-400"&gt;HK${{ s.amount.toFixed(1) }}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/section&gt;</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="text-center mt-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button @click="clearAll" class="text-red-500 text-sm underline"&gt;清除所有資料重嚟&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1">&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const { createApp, ref, computed, watch, onMounted } = Vue;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>createApp({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setup() {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Data</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const users = ref([]);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const newUser = ref("");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const showSettings = ref(true);</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const expenses = ref([]);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const newItem = ref("");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const newAmount = ref("");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const selectedCurrency = ref("HKD");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const currentRate = ref(1);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const payer = ref("");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const involvedUsers = ref([]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// API to fetch rates</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const fetchRate = async () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if(selectedCurrency.value === 'HKD') {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>currentRate.value = 1;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>try {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Using a free API (open.er-api.com)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const res = await fetch(`https://open.er-api.com/v6/latest/${selectedCurrency.value}`);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const data = await res.json();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if(data &amp;&amp; data.rates &amp;&amp; data.rates.HKD) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>currentRate.value = data.rates.HKD;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>} catch (e) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>alert("攞唔到匯率，請手動輸入或者檢查網絡");</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Actions</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const addUser = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (newUser.value.trim() &amp;&amp; !users.value.includes(newUser.value)) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>users.value.push(newUser.value.trim());</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Auto select newly added user to involve list</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>involvedUsers.value.push(newUser.value.trim());<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if(!payer.value) payer.value = newUser.value.trim();</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>newUser.value = "";</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const removeUser = (index) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const u = users.value[index];</p>
+<p class="p1"><span class="Apple-converted-space">                </span>users.value.splice(index, 1);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>involvedUsers.value = involvedUsers.value.filter(x =&gt; x !== u);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if(payer.value === u) payer.value = users.value[0] || "";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const addExpense = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (!newItem.value || !newAmount.value || !payer.value || involvedUsers.value.length === 0) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>alert("請填好資料：項目、金額、畀錢人、同埋邊個有份！");</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>return;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>const hkdVal = newAmount.value * currentRate.value;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>expenses.value.unshift({</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>item: newItem.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>originalAmount: newAmount.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>originalCurrency: selectedCurrency.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>rate: currentRate.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>hkdAmount: hkdVal,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>payer: payer.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>involved: [...involvedUsers.value]</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Reset form</p>
+<p class="p1"><span class="Apple-converted-space">                </span>newItem.value = "";</p>
+<p class="p1"><span class="Apple-converted-space">                </span>newAmount.value = "";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const removeExpense = (index) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if(confirm("確定刪除呢筆數？")) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>expenses.value.splice(index, 1);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const clearAll = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if(confirm("會洗走晒所有記錄，確定？")) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>users.value = [];</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>expenses.value = [];</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>localStorage.removeItem('travelApp_data');</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>location.reload();</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Calculation Logic</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const totalSpent = computed(() =&gt; expenses.value.reduce((sum, e) =&gt; sum + e.hkdAmount, 0));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>const settlements = computed(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let balances = {};</p>
+<p class="p1"><span class="Apple-converted-space">                </span>users.value.forEach(u =&gt; balances[u] = 0);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Calculate balances</p>
+<p class="p1"><span class="Apple-converted-space">                </span>expenses.value.forEach(exp =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const paidBy = exp.payer;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const amount = exp.hkdAmount;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const splitCount = exp.involved.length;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const splitAmount = amount / splitCount;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Payer gets positive balance (money owed to them)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if(balances[paidBy] !== undefined) balances[paidBy] += amount;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// Involved people get negative balance (money they owe)</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>exp.involved.forEach(person =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>if(balances[person] !== undefined) balances[person] -= splitAmount;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>// Minimize transactions algorithm</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let debtors = [];</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let creditors = [];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>for (const [u, val] of Object.entries(balances)) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (val &lt; -0.01) debtors.push({ name: u, amount: val }); // Negative means they owe</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (val &gt; 0.01) creditors.push({ name: u, amount: val }); // Positive means they receive</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>debtors.sort((a, b) =&gt; a.amount - b.amount);</p>
+<p class="p1"><span class="Apple-converted-space">                </span>creditors.sort((a, b) =&gt; b.amount - a.amount);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>let results = [];</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let i = 0; // debtor index</p>
+<p class="p1"><span class="Apple-converted-space">                </span>let j = 0; // creditor index</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>while (i &lt; debtors.length &amp;&amp; j &lt; creditors.length) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>let debtor = debtors[i];</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>let creditor = creditors[j];</p>
+<p class="p2"><span class="Apple-converted-space">                    </span></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>// The amount to settle is the minimum of what debtor owes and creditor needs</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>let amount = Math.min(Math.abs(debtor.amount), creditor.amount);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (amount &gt; 0.01) {</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>results.push({</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>from: debtor.name,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>to: creditor.name,</p>
+<p class="p1"><span class="Apple-converted-space">                            </span>amount: amount</p>
+<p class="p1"><span class="Apple-converted-space">                        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>debtor.amount += amount;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>creditor.amount -= amount;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (Math.abs(debtor.amount) &lt; 0.01) i++;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if (creditor.amount &lt; 0.01) j++;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">                </span>return results;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Persistence</p>
+<p class="p1"><span class="Apple-converted-space">            </span>onMounted(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>const saved = localStorage.getItem('travelApp_data');</p>
+<p class="p1"><span class="Apple-converted-space">                </span>if (saved) {</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>const data = JSON.parse(saved);</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>users.value = data.users || [];</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>expenses.value = data.expenses || [];</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>if(users.value.length &gt; 0) showSettings.value = false;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>watch([users, expenses], () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>localStorage.setItem('travelApp_data', JSON.stringify({</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>users: users.value,</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>expenses: expenses.value</p>
+<p class="p1"><span class="Apple-converted-space">                </span>}));</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}, { deep: true });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>return {</p>
+<p class="p1"><span class="Apple-converted-space">                </span>users, newUser, showSettings, addUser, removeUser,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>expenses, newItem, newAmount, selectedCurrency, currentRate, payer, involvedUsers, addExpense, removeExpense,</p>
+<p class="p1"><span class="Apple-converted-space">                </span>fetchRate, settlements, totalSpent, clearAll</p>
+<p class="p1"><span class="Apple-converted-space">            </span>};</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}).mount('#app');</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
