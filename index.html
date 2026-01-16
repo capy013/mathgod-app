@@ -3,25 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數神 MathGod - 同步版</title>
+    <title>數神 MathGod - 穩定同步版</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #e0e0e0; }
         .card { background-color: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #333; }
-        .btn-primary { background-color: #10b981; color: white; font-weight: bold; padding: 10px 20px; border-radius: 8px; width: 100%; transition: 0.2s; }
+        .btn-primary { background-color: #10b981; color: white; font-weight: bold; padding: 12px 20px; border-radius: 8px; width: 100%; transition: 0.2s; touch-action: manipulation; }
         .btn-primary:active { transform: scale(0.98); background-color: #059669; }
-        .btn-secondary { background-color: #374151; color: white; padding: 8px 16px; border-radius: 8px; width: 100%; }
-        .input-dark { background-color: #2d2d2d; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        .btn-secondary { background-color: #374151; color: white; padding: 10px 16px; border-radius: 8px; width: 100%; touch-action: manipulation; }
+        .input-dark { background-color: #2d2d2d; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; width: 100%; outline: none; font-size: 16px; } /* font-size 16px prevents zoom on iOS */
         .input-dark:focus { border-color: #10b981; }
-        .tag { display: inline-block; background: #374151; padding: 4px 10px; border-radius: 16px; font-size: 0.9em; margin-right: 5px; margin-bottom: 5px; cursor: pointer; border: 1px solid transparent; }
-        .tag.selected { background: #065f46; border-color: #10b981; color: #a7f3d0; }
-        .bill-item { border-left: 4px solid #10b981; padding-left: 10px; margin-bottom: 10px; }
-        .sync-badge { font-size: 0.8em; padding: 2px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; }
-        .status-online { background-color: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+        .tag { display: inline-block; background: #374151; padding: 6px 12px; border-radius: 20px; font-size: 0.9em; margin-right: 6px; margin-bottom: 6px; cursor: pointer; border: 2px solid transparent; user-select: none; }
+        .tag.selected { background: #064e3b; border-color: #10b981; color: #6ee7b7; }
+        .bill-item { border-left: 4px solid #10b981; padding-left: 12px; margin-bottom: 12px; background: #262626; padding: 10px; border-radius: 0 8px 8px 0; }
+        .sync-badge { font-size: 0.85em; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.3s; }
+        .status-online { background-color: #064e3b; color: #6ee7b7; border: 1px solid #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
         .status-offline { background-color: #374151; color: #9ca3af; border: 1px solid #4b5563; }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto pb-20">
+<body class="p-4 max-w-md mx-auto pb-24">
 
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-emerald-400">數神 MathGod</h1>
@@ -31,12 +35,12 @@
     </div>
 
     <div class="card">
-        <h2 class="text-lg font-bold mb-3 flex justify-between">
+        <h2 class="text-lg font-bold mb-3 flex justify-between items-center">
             👥 參與者 <span id="userCount" class="text-sm font-normal text-gray-400">(0人)</span>
         </h2>
         <div class="flex gap-2 mb-3">
-            <input type="text" id="newUserName" class="input-dark" placeholder="輸入名 (例: Jacky)" onkeypress="handleEnter(event, addUser)">
-            <button onclick="addUser()" class="bg-emerald-600 text-white px-4 rounded-lg font-bold">+</button>
+            <input type="text" id="newUserName" class="input-dark" placeholder="輸入人名 (例: Jason)" onkeypress="handleEnter(event, addUser)">
+            <button onclick="addUser()" class="bg-emerald-600 text-white px-5 rounded-lg font-bold text-xl leading-none pt-1 pb-1">+</button>
         </div>
         <div id="userList" class="flex flex-wrap gap-2">
             </div>
@@ -46,30 +50,31 @@
         <h2 class="text-lg font-bold mb-3">💸 新增帳單</h2>
         
         <div class="mb-3">
-            <label class="text-xs text-gray-400 block mb-1">活動/項目名稱</label>
+            <label class="text-xs text-gray-400 block mb-1">項目名稱</label>
             <input type="text" id="billDesc" class="input-dark" placeholder="例: 食拉麵 / Uber">
         </div>
 
         <div class="flex gap-3 mb-3">
             <div class="w-1/2">
                 <label class="text-xs text-gray-400 block mb-1">金額 ($)</label>
-                <input type="number" id="billAmount" class="input-dark" placeholder="0">
+                <input type="number" id="billAmount" class="input-dark" placeholder="0" inputmode="decimal">
             </div>
             <div class="w-1/2">
                 <label class="text-xs text-gray-400 block mb-1">邊個俾錢?</label>
-                <select id="payerSelect" class="input-dark">
+                <select id="payerSelect" class="input-dark bg-[#2d2d2d]">
                     <option value="" disabled selected>請選擇</option>
                 </select>
             </div>
         </div>
 
         <div class="mb-3">
-            <label class="text-xs text-gray-400 block mb-1">邊個有份? (點擊選擇，預設全選)</label>
-            <div id="consumerList" class="flex flex-wrap gap-2 mt-2">
-                </div>
+            <label class="text-xs text-gray-400 block mb-1">邊個有份? (點擊選擇，綠色=有份)</label>
+            <div id="consumerList" class="flex flex-wrap gap-2 mt-2 bg-gray-800 p-2 rounded border border-gray-700">
+                <span class="text-gray-500 text-sm p-1">請先新增參與者...</span>
+            </div>
         </div>
 
-        <button onclick="addBill()" class="btn-primary">確認記帳</button>
+        <button onclick="addBill()" class="btn-primary text-lg">確認記帳</button>
     </div>
 
     <div class="card" id="historySection" style="display:none;">
@@ -81,38 +86,47 @@
     <div class="card">
         <h2 class="text-lg font-bold mb-3 flex justify-between items-center">
             📊 結算結果
-            <button onclick="copyResult()" class="text-xs bg-gray-700 px-2 py-1 rounded border border-gray-600">📋 複製文字</button>
+            <button onclick="copyResult()" class="text-xs bg-gray-700 px-3 py-1.5 rounded border border-gray-600 hover:bg-gray-600">📋 複製文字</button>
         </h2>
         <div id="resultArea" class="space-y-2 text-sm">
             <p class="text-gray-500 text-center py-4">暫時未有數</p>
         </div>
-        <div class="mt-4 pt-4 border-t border-gray-700 text-right">
-             <span class="text-gray-400 text-xs">總開支: </span>
+        <div class="mt-4 pt-4 border-t border-gray-700 text-right flex justify-between items-center">
+             <span class="text-gray-400 text-xs">總開支</span>
              <span id="totalExpense" class="text-xl font-bold text-emerald-400">$0</span>
         </div>
     </div>
 
-    <div class="text-center mt-8 mb-8">
-        <button onclick="resetAll()" class="text-red-400 text-xs underline">⚠️ 重置所有資料</button>
+    <div class="text-center mt-8 mb-8 pb-10">
+        <button onclick="resetAll()" class="text-red-400 text-xs underline px-4 py-2">⚠️ 重置所有資料</button>
     </div>
 
     <div id="syncModal" class="fixed inset-0 bg-black bg-opacity-90 hidden flex items-center justify-center z-50">
-        <div class="bg-gray-800 p-6 rounded-xl w-11/12 max-w-sm border border-gray-700">
-            <h3 class="text-xl font-bold mb-4 text-emerald-400">🌐 同步房間</h3>
-            <p class="text-sm text-gray-400 mb-4">輸入相同的房間號碼，大家就可以即時一齊記帳。</p>
-            <input type="text" id="roomInput" class="input-dark mb-4 text-center text-xl tracking-widest" placeholder="例如: 888888">
+        <div class="bg-gray-800 p-6 rounded-xl w-11/12 max-w-sm border border-gray-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-2 text-emerald-400">🌐 同步房間</h3>
+            <p class="text-sm text-gray-400 mb-6">輸入相同的 6 位數號碼，大家就可以即時同步。</p>
+            
+            <label class="text-xs text-gray-500 block mb-1">房間號碼</label>
+            <input type="tel" id="roomInput" class="input-dark mb-6 text-center text-2xl tracking-widest font-mono" placeholder="888888" maxlength="6">
+            
             <button onclick="joinRoom()" class="btn-primary mb-3">進入房間</button>
-            <button onclick="closeSyncModal()" class="btn-secondary">取消 / 單機用住先</button>
+            <button onclick="closeSyncModal()" class="btn-secondary text-gray-400">取消 / 單機用住先</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+    <script>
+        // 1. 初始化狀態
+        const appState = {
+            users: [],
+            bills: [],
+            roomId: null,
+            db: null
+        };
 
-        // 🔴 請在此處填入你的 Firebase 資料
+        // 2. Firebase 配置 (請在此填入你的資料)
+        // ⚠️ 務必替換這裡的 apiKey
         const firebaseConfig = {
-            apiKey: "請填入你的API_KEY", // <--- 這裡！
+            apiKey: "你的_API_KEY_填在這裡", 
             authDomain: "mathgod2.firebaseapp.com",
             databaseURL: "https://mathgod2-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "mathgod2",
@@ -121,39 +135,24 @@
             appId: "1:1056582522765:web:03f3938031d2003c40156d"
         };
 
-        // Initialize Firebase
-        let app, db;
+        // 3. 嘗試連接 Firebase
         try {
-            app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-            console.log("Firebase initialized");
+            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "你的_API_KEY_填在這裡") {
+                firebase.initializeApp(firebaseConfig);
+                appState.db = firebase.database();
+                console.log("Firebase 連接成功");
+            } else {
+                console.warn("Firebase 未配置或庫未加載，將運行於單機模式");
+            }
         } catch (e) {
-            console.error("Firebase init error (check API Key):", e);
+            console.error("Firebase Init Error:", e);
+            alert("Firebase 設定有誤，已切換至單機模式。");
         }
 
-        // Global State
-        window.appState = {
-            users: [],
-            bills: [],
-            roomId: null
-        };
-
-        // Expose functions to window for HTML onclick events
-        window.addUser = addUser;
-        window.addBill = addBill;
-        window.deleteBill = deleteBill;
-        window.resetAll = resetAll;
-        window.openSyncModal = openSyncModal;
-        window.closeSyncModal = closeSyncModal;
-        window.joinRoom = joinRoom;
-        window.copyResult = copyResult;
-        window.toggleConsumer = toggleConsumer;
-        window.handleEnter = handleEnter;
-
-        // Load Local Data on Start
+        // 4. 啟動加載
         loadLocalData();
 
-        // --- Core Functions ---
+        // --- 核心功能函數 ---
 
         function handleEnter(e, func) {
             if (e.key === 'Enter') func();
@@ -164,15 +163,16 @@
             const name = nameInput.value.trim();
             if (!name) return;
             
-            if (window.appState.users.includes(name)) {
+            if (appState.users.includes(name)) {
                 alert("個名撞咗啦，試下第二個！");
                 return;
             }
 
-            window.appState.users.push(name);
+            appState.users.push(name);
             nameInput.value = '';
-            saveData();
-            renderUI();
+            
+            saveData(); // 存檔
+            renderUI(); // 更新畫面
         }
 
         function toggleConsumer(name, btn) {
@@ -180,68 +180,86 @@
         }
 
         function addBill() {
-            const desc = document.getElementById('billDesc').value.trim() || "未分類項目";
-            const amount = parseFloat(document.getElementById('billAmount').value);
-            const payer = document.getElementById('payerSelect').value;
+            // 獲取輸入
+            const descInput = document.getElementById('billDesc');
+            const amountInput = document.getElementById('billAmount');
+            const payerSelect = document.getElementById('payerSelect');
             
-            // Get selected consumers
+            const desc = descInput.value.trim() || "未分類項目";
+            const amount = parseFloat(amountInput.value);
+            const payer = payerSelect.value;
+            
+            // 獲取選中的消費者
             const consumerBtns = document.querySelectorAll('#consumerList .tag.selected');
-            const consumers = Array.from(consumerBtns).map(btn => btn.innerText);
+            const consumers = Array.from(consumerBtns).map(btn => btn.getAttribute('data-name'));
 
-            if (!amount || amount <= 0) { alert("金額唔啱喎！"); return; }
+            // 驗證
+            if (isNaN(amount) || amount <= 0) { alert("金額輸入錯誤！"); return; }
             if (!payer) { alert("邊個俾錢呀？"); return; }
-            if (consumers.length === 0) { alert("冇人有份？"); return; }
+            if (consumers.length === 0) { alert("冇人有份？請點選下方人名"); return; }
 
             const newBill = {
-                id: Date.now(),
-                desc,
-                amount,
-                payer,
-                consumers,
+                id: Date.now(), // Unique ID
+                desc: desc,
+                amount: amount,
+                payer: payer,
+                consumers: consumers,
                 date: new Date().toLocaleString('zh-HK', { month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'})
             };
 
-            window.appState.bills.push(newBill);
+            // 更新數據
+            appState.bills.push(newBill);
             
-            // Clear inputs
-            document.getElementById('billDesc').value = '';
-            document.getElementById('billAmount').value = '';
-            // Reset consumers to all selected
+            // 清空輸入框
+            descInput.value = '';
+            amountInput.value = '';
+            // 重置消費者選擇為全選
             renderConsumers(true); 
 
             saveData();
             renderUI();
+            
+            // 視覺反饋
+            alert("✅ 記帳成功！");
         }
 
         function deleteBill(id) {
             if(!confirm("確定刪除呢條數？")) return;
-            window.appState.bills = window.appState.bills.filter(b => b.id !== id);
+            appState.bills = appState.bills.filter(b => b.id !== id);
             saveData();
             renderUI();
         }
 
         function resetAll() {
-            if (!confirm("⚠️ 確定要清除所有資料？不能復原！")) return;
-            window.appState.users = [];
-            window.appState.bills = [];
+            if (!confirm("⚠️ 確定要清除所有資料？(如果係同步模式，會連雲端一齊清)")) return;
             
-            if (window.appState.roomId) {
-                // If online, clear DB
-                set(ref(db, 'rooms/' + window.appState.roomId), {
+            appState.users = [];
+            appState.bills = [];
+            
+            // 如果連了線，清空雲端
+            if (appState.roomId && appState.db) {
+                appState.db.ref('rooms/' + appState.roomId).set({
                     users: [],
                     bills: [],
                     lastUpdate: Date.now()
                 });
             }
             
+            appState.roomId = null;
+            updateSyncStatus(false);
+            
             saveData();
             renderUI();
+            
+            // 重載頁面確保乾淨
+            setTimeout(() => location.reload(), 500);
         }
 
-        // --- Sync Logic ---
+        // --- 同步邏輯 (Sync) ---
 
         function openSyncModal() {
             document.getElementById('syncModal').classList.remove('hidden');
+            document.getElementById('roomInput').focus();
         }
 
         function closeSyncModal() {
@@ -249,66 +267,85 @@
         }
 
         function joinRoom() {
+            if (!appState.db) {
+                alert("Firebase 未設定好 (API Key 缺失)，只能用單機版。");
+                closeSyncModal();
+                return;
+            }
+
             const roomCode = document.getElementById('roomInput').value.trim();
             if (!roomCode || roomCode.length < 3) {
                 alert("請輸入有效的房間號碼");
                 return;
             }
 
-            window.appState.roomId = roomCode;
+            appState.roomId = roomCode;
             closeSyncModal();
             updateSyncStatus(true, roomCode);
 
-            // Listen to Firebase
-            const roomRef = ref(db, 'rooms/' + roomCode);
-            onValue(roomRef, (snapshot) => {
+            // 監聽 Firebase 數據變化
+            const roomRef = appState.db.ref('rooms/' + roomCode);
+            
+            roomRef.on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    window.appState.users = data.users || [];
-                    window.appState.bills = data.bills || [];
-                    console.log("Synced from cloud:", data);
-                    renderUI(); // Render but don't save to loop
+                    // 如果雲端有數據，覆蓋本地 (除了當是剛創建時)
+                    appState.users = data.users || [];
+                    appState.bills = data.bills || [];
+                    console.log("雲端同步更新:", data);
+                    renderUI(false); // 這裡不調用 saveData 避免死循環
+                    
+                    // 同步到本地備份
+                    localStorage.setItem('mathGodData', JSON.stringify({
+                        users: appState.users,
+                        bills: appState.bills
+                    }));
                 } else {
-                    // New room, push local data up
-                    saveData(); 
+                    // 如果雲端是空的（新房間），把本地數據推上去
+                    saveData();
                 }
             });
         }
 
         function saveData() {
-            // 1. Save Local
+            // 1. 存本地
             localStorage.setItem('mathGodData', JSON.stringify({
-                users: window.appState.users,
-                bills: window.appState.bills
+                users: appState.users,
+                bills: appState.bills
             }));
 
-            // 2. Save Cloud (if connected)
-            if (window.appState.roomId && db) {
-                set(ref(db, 'rooms/' + window.appState.roomId), {
-                    users: window.appState.users,
-                    bills: window.appState.bills,
+            // 2. 存雲端 (如果已連線)
+            if (appState.roomId && appState.db) {
+                appState.db.ref('rooms/' + appState.roomId).set({
+                    users: appState.users,
+                    bills: appState.bills,
                     lastUpdate: Date.now()
-                });
+                }).catch(err => console.error("同步失敗:", err));
             }
         }
 
         function loadLocalData() {
             const stored = localStorage.getItem('mathGodData');
             if (stored) {
-                const data = JSON.parse(stored);
-                window.appState.users = data.users || [];
-                window.appState.bills = data.bills || [];
-                renderUI();
+                try {
+                    const data = JSON.parse(stored);
+                    appState.users = data.users || [];
+                    appState.bills = data.bills || [];
+                    renderUI();
+                } catch(e) {
+                    console.error("讀取舊數據失敗", e);
+                }
             }
         }
 
-        // --- Rendering & Calculation ---
+        // --- 畫面渲染 & 計算 ---
 
-        function renderUI() {
+        function renderUI(shouldSave = false) {
             renderUsers();
-            renderConsumers(); 
+            renderConsumers(false); // false = don't reset selection, keep state if possible
             renderBills();
             calculateDebts();
+            if (shouldSave) saveData();
         }
 
         function updateSyncStatus(isOnline, code) {
@@ -318,7 +355,7 @@
                 statusDiv.innerHTML = `<span>🟢 房間: ${code}</span>`;
             } else {
                 statusDiv.className = 'sync-badge status-offline cursor-pointer';
-                statusDiv.innerHTML = `<span>⚪ 單機模式</span>`;
+                statusDiv.innerHTML = `<span>⚪ 單機模式 (點擊連線)</span>`;
             }
         }
 
@@ -327,15 +364,19 @@
             const select = document.getElementById('payerSelect');
             const currentPayer = select.value;
 
-            list.innerHTML = window.appState.users.map(u => 
-                `<span class="tag cursor-default text-gray-300 bg-gray-700">${u}</span>`
-            ).join('');
+            if (appState.users.length === 0) {
+                list.innerHTML = '<span class="text-gray-500 text-sm">暫無參與者</span>';
+            } else {
+                list.innerHTML = appState.users.map(u => 
+                    `<span class="tag cursor-default text-gray-300 bg-gray-700">${u}</span>`
+                ).join('');
+            }
             
-            document.getElementById('userCount').innerText = `(${window.appState.users.length}人)`;
+            document.getElementById('userCount').innerText = `(${appState.users.length}人)`;
 
-            // Update Payer Select
+            // 更新付款人下拉選單
             select.innerHTML = '<option value="" disabled>請選擇</option>';
-            window.appState.users.forEach(u => {
+            appState.users.forEach(u => {
                 const option = document.createElement('option');
                 option.value = u;
                 option.innerText = u;
@@ -346,16 +387,26 @@
 
         function renderConsumers(reset = false) {
             const container = document.getElementById('consumerList');
-            // If checking existing state vs reset
+            
+            if (appState.users.length === 0) {
+                container.innerHTML = '<span class="text-gray-500 text-sm p-1">請先新增參與者...</span>';
+                return;
+            }
+
+            // 記住當前選中的人 (如果是重繪而不是重置)
             let currentSelected = [];
             if (!reset) {
-                document.querySelectorAll('#consumerList .tag.selected').forEach(el => currentSelected.push(el.innerText));
+                document.querySelectorAll('#consumerList .tag.selected').forEach(el => {
+                    currentSelected.push(el.getAttribute('data-name'));
+                });
             }
             
-            container.innerHTML = window.appState.users.map(u => {
-                // If reset (new bill) or previously selected, mark as selected
-                const isSelected = reset || currentSelected.includes(u) || currentSelected.length === 0; 
-                return `<div class="tag ${isSelected ? 'selected' : ''}" onclick="toggleConsumer('${u}', this)">${u}</div>`;
+            container.innerHTML = appState.users.map(u => {
+                // 如果是重置(新單)，預設全選；否則保持之前的選擇狀態
+                // 若之前無選擇紀錄（例如剛加人），預設為選中
+                let isSelected = reset ? true : (currentSelected.length > 0 ? currentSelected.includes(u) : true);
+                
+                return `<div class="tag ${isSelected ? 'selected' : ''}" data-name="${u}" onclick="toggleConsumer('${u}', this)">${u}</div>`;
             }).join('');
         }
 
@@ -363,33 +414,36 @@
             const list = document.getElementById('billList');
             const section = document.getElementById('historySection');
             
-            if (window.appState.bills.length === 0) {
+            if (appState.bills.length === 0) {
                 section.style.display = 'none';
                 return;
             }
             section.style.display = 'block';
 
-            list.innerHTML = window.appState.bills.slice().reverse().map(b => `
-                <div class="bill-item bg-gray-800 rounded p-2 flex justify-between items-start">
+            list.innerHTML = appState.bills.slice().reverse().map(b => `
+                <div class="bill-item flex justify-between items-start">
                     <div>
-                        <div class="font-bold text-emerald-400">${b.desc}</div>
-                        <div class="text-xs text-gray-400">${b.payer} 俾 $${b.amount} (for ${b.consumers.length}人)</div>
-                        <div class="text-xs text-gray-500 mt-1">${b.date}</div>
+                        <div class="font-bold text-emerald-400 text-base">${b.desc}</div>
+                        <div class="text-xs text-gray-300 mt-1">
+                            <span class="text-emerald-200 font-bold">${b.payer}</span> 俾 <span class="font-bold text-white">$${b.amount}</span>
+                        </div> 
+                        <div class="text-xs text-gray-500 mt-1">(${b.consumers.length}人分: ${b.consumers.join(', ')})</div>
+                        <div class="text-[10px] text-gray-600 mt-1">${b.date}</div>
                     </div>
-                    <button onclick="deleteBill(${b.id})" class="text-gray-500 hover:text-red-400 px-2">✕</button>
+                    <button onclick="deleteBill(${b.id})" class="text-gray-500 hover:text-red-400 px-3 py-2 text-lg">✕</button>
                 </div>
             `).join('');
             
             // Update Total
-            const total = window.appState.bills.reduce((sum, b) => sum + b.amount, 0);
+            const total = appState.bills.reduce((sum, b) => sum + b.amount, 0);
             document.getElementById('totalExpense').innerText = `$${total.toFixed(1)}`;
         }
 
         function calculateDebts() {
             const balances = {};
-            window.appState.users.forEach(u => balances[u] = 0);
+            appState.users.forEach(u => balances[u] = 0);
 
-            window.appState.bills.forEach(bill => {
+            appState.bills.forEach(bill => {
                 const amount = bill.amount;
                 const payer = bill.payer;
                 const consumers = bill.consumers;
@@ -397,44 +451,35 @@
                 if (consumers.length > 0) {
                     const splitAmount = amount / consumers.length;
                     
-                    // Payer gets positive balance (paid more)
                     if (balances[payer] !== undefined) balances[payer] += amount;
 
-                    // Consumers get negative balance (consumed value)
                     consumers.forEach(c => {
                         if (balances[c] !== undefined) balances[c] -= splitAmount;
                     });
                 }
             });
 
-            // Display Logic
             const resultArea = document.getElementById('resultArea');
-            let html = '';
             const debtors = [];
             const creditors = [];
 
-            // Sort into who owes and who is owed
             for (const [user, amount] of Object.entries(balances)) {
-                if (amount < -0.01) debtors.push({ user, amount }); // Owes money
-                else if (amount > 0.01) creditors.push({ user, amount }); // Is owed money
+                if (amount < -0.01) debtors.push({ user, amount }); 
+                else if (amount > 0.01) creditors.push({ user, amount }); 
             }
 
             debtors.sort((a, b) => a.amount - b.amount);
             creditors.sort((a, b) => b.amount - a.amount);
 
             const transactions = [];
-
-            // Settlement Algorithm
-            let i = 0; // debtor index
-            let j = 0; // creditor index
+            let i = 0; 
+            let j = 0; 
 
             while (i < debtors.length && j < creditors.length) {
                 let debtor = debtors[i];
                 let creditor = creditors[j];
 
                 let amount = Math.min(Math.abs(debtor.amount), creditor.amount);
-                
-                // Round to 1 decimal place to avoid 0.0000001 issues
                 amount = Math.round(amount * 10) / 10;
 
                 if (amount > 0) {
@@ -452,7 +497,7 @@
                 resultArea.innerHTML = '<div class="text-center text-gray-500 py-2">目前沒有需要找贖的數。</div>';
             } else {
                 resultArea.innerHTML = transactions.map(t => 
-                    `<div class="bg-gray-800 p-2 rounded border-l-4 border-yellow-500 text-white">${t}</div>`
+                    `<div class="bg-gray-800 p-3 rounded border-l-4 border-yellow-500 text-white font-mono text-sm shadow">${t}</div>`
                 ).join('');
             }
             
@@ -461,19 +506,24 @@
 
         function copyResult() {
             const tx = calculateDebts();
-            if (tx.length === 0) { alert("冇數要複製！"); return; }
+            if (!tx || tx.length === 0) { alert("冇數要複製！"); return; }
             
             const total = document.getElementById('totalExpense').innerText;
-            const text = `💰 數神 MathGod 結算:\n\n${tx.join('\n')}\n\n總開支: ${total}\n(Link: ${window.location.href})`;
+            const text = `💰 數神 MathGod 結算:\n\n${tx.join('\n')}\n\n總開支: ${total}`;
             
-            navigator.clipboard.writeText(text).then(() => {
-                alert("已複製結果！可以去 WhatsApp貼上啦。");
-            }).catch(err => {
-                console.error('Copy failed', err);
-                alert("複製失敗，請人手 Cap 圖。");
-            });
+            // 兼容手機複製
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand("copy");
+                alert("✅ 已複製結果！可以去 WhatsApp 貼上啦。");
+            } catch (err) {
+                alert("複製失敗，請手動 Cap 圖。");
+            }
+            document.body.removeChild(textarea);
         }
-
     </script>
 </body>
 </html>
