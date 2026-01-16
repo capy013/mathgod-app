@@ -299,7 +299,7 @@ createApp({
         };
 
         const copyText = () => {
-            let msg = `【⚡️數神結算】${eventName.value || '結算如下'}\n計完數喇！請跟住下面箭頭畀錢：\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
+            let msg = `【⚡️數神結算】${eventName.value || '結算如下'}\n計完數喇！請跟住以下指示畀錢：\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
             settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
             if(showDetails.value) {
                 msg += `\n--- 消費詳情 ---\n`;
