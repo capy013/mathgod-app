@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>數神 - 專業全功能版</title>
+    <title>數神 - 專業修復版</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -17,16 +17,16 @@
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: #000; overflow-x: hidden;
-            overscroll-behavior-y: contain; /* 防止垂直下拉刷新 */
+            overscroll-behavior-y: contain;
         }
-        body { display: flex; justify-content: center; align-items: flex-start; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { display: flex; justify-content: center; align-items: flex-start; font-family: -apple-system, sans-serif; }
         #app { width: 100%; max-width: 500px; min-height: 100vh; background-color: #121212; position: relative; }
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
         .update-gradient { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
-        .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
-        .input-error { border: 1px solid #ef4444 !important; box-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
-        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; display: flex; align-items: center; gap: 4px; }
+        .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; }
+        .input-error { border: 1px solid #ef4444 !important; }
+        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; display: flex; align-items: center; gap: 4px; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinning { animation: spin 0.8s linear; }
     </style>
@@ -37,13 +37,13 @@
     <header class="evergreen-gradient text-white p-5 sticky top-0 z-20 shadow-lg rounded-b-3xl">
         <div class="flex justify-between items-center mb-4 h-8">
             <h1 class="text-2xl font-black italic tracking-tighter"><i class="fas fa-bolt mr-1 text-yellow-400"></i>數神</h1>
-            <div class="flex flex-col items-end cursor-pointer active:scale-95 transition-all" @click="manualSync">
+            <div class="flex flex-col items-end cursor-pointer" @click="manualSync">
                 <div v-if="roomId" class="flex flex-col items-end">
                     <div class="status-badge">
                         <i class="fas fa-sync-alt" :class="{'spinning': isSyncing}"></i>
                         <span>房間: {{ roomId }}</span>
                     </div>
-                    <span class="text-[7px] text-white/40 font-mono mt-0.5">Sync: {{ lastSyncTime }}</span>
+                    <span class="text-[7px] text-white/40 mt-0.5">Sync: {{ lastSyncTime }}</span>
                 </div>
                 <button v-else @click.stop="showSyncModal = true" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold">進入同步模式</button>
             </div>
@@ -59,15 +59,15 @@
 
     <div class="p-4 space-y-6">
         <section v-if="roomId" class="bg-white/5 border border-white/10 rounded-2xl p-3 flex justify-between items-center">
-            <div class="text-[10px] text-gray-400 font-bold"><i class="fas fa-history mr-1"></i>雲端剩餘 {{ daysRemaining }} 日</div>
+            <div class="text-[10px] text-gray-400 font-bold">雲端剩餘 {{ daysRemaining }} 日</div>
             <button @click="renewRoom" class="text-[10px] border border-gray-600 text-gray-400 px-3 py-1 rounded-lg">續期</button>
         </section>
 
         <section class="card-bg p-5 rounded-3xl">
             <h2 class="font-bold text-emerald-500 mb-4 text-xs uppercase tracking-widest">朋友列表</h2>
             <div class="flex gap-2">
-                <input v-model="newUser" @keyup.enter="addUser" :class="{'input-error': errors.user}" type="text" placeholder="名稱..." class="input-bg flex-1 p-3 rounded-2xl text-sm outline-none">
-                <button @click="addUser" class="bg-emerald-600 text-white px-6 rounded-2xl text-sm font-bold active:scale-95">加入</button>
+                <input v-model="newUser" @keyup.enter="addUser" class="input-bg flex-1 p-3 rounded-2xl text-sm outline-none" placeholder="輸入名稱...">
+                <button @click="addUser" class="bg-emerald-600 text-white px-6 rounded-2xl text-sm font-bold">加入</button>
             </div>
             <div class="flex flex-wrap gap-2 mt-4">
                 <span v-for="(u, i) in users" :key="u" class="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-xs border border-emerald-500/20 flex items-center gap-2 font-bold">
@@ -78,8 +78,6 @@
 
         <section class="card-bg rounded-3xl p-6 border border-white/5" :class="{'border-amber-500/30': isEditing}">
             <div class="space-y-4">
-                <div v-if="isEditing" class="flex justify-between items-center"><span class="text-[10px] bg-amber-600/20 text-amber-500 px-2 py-1 rounded-lg font-bold">修改中...</span><button @click="cancelEdit" class="text-[10px] text-gray-400 underline">取消</button></div>
-                
                 <input v-model="form.item" :class="{'input-error': errors.item}" type="text" placeholder="項目" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
                 
                 <div class="flex gap-2">
@@ -100,14 +98,14 @@
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-gray-500 ml-1">付款人</label>
+                        <label class="text-[10px] font-bold text-gray-500">付款人</label>
                         <select v-model="form.payer" :class="{'input-error': errors.payer}" class="input-bg w-full p-3 rounded-2xl text-sm outline-none font-bold">
                             <option value="">選擇...</option>
                             <option v-for="u in users" :key="u" :value="u">{{ u }}</option>
                         </select>
                     </div>
                     <div class="space-y-1">
-                        <div class="flex justify-between items-center ml-1"><label class="text-[10px] font-bold text-gray-500">參與人</label><button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-bold">全選</button></div>
+                        <div class="flex justify-between items-center"><label class="text-[10px] font-bold text-gray-500">參與人</label><button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-bold">全選</button></div>
                         <div :class="{'input-error': errors.involved}" class="input-bg max-h-32 overflow-y-auto rounded-2xl p-3 text-[10px]">
                             <div v-for="u in users" :key="u" class="mb-2 flex items-center gap-2">
                                 <input type="checkbox" :value="u" v-model="form.involved" class="accent-emerald-500 w-4 h-4">
@@ -120,12 +118,13 @@
                 <button @click="addExpense" :class="isEditing ? 'update-gradient' : 'evergreen-gradient'" class="w-full text-white font-black py-4 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
                     {{ isEditing ? '確認更新' : '確認記帳' }}
                 </button>
+                <button v-if="isEditing" @click="cancelEdit" class="w-full text-gray-500 text-xs font-bold py-2">取消修改</button>
             </div>
         </section>
 
         <section class="space-y-3">
             <h3 v-if="expenses.length > 0" class="text-[10px] font-bold text-gray-500 uppercase ml-2 tracking-widest">紀錄清單</h3>
-            <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-600 active:opacity-70 transition-opacity">
+            <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-600 active:opacity-70">
                 <div class="flex-1 min-w-0">
                     <div class="font-bold text-sm text-gray-200 truncate">{{ exp.item }}</div>
                     <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付)</div>
@@ -141,24 +140,24 @@
     </div>
 
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-6" @click.self="showSyncModal = false">
-        <div class="card-bg w-full max-w-sm rounded-3xl p-6 border border-white/10">
+        <div class="card-bg w-full max-w-sm rounded-3xl p-6">
             <div class="flex gap-2 mb-6 p-1 bg-black/20 rounded-xl">
                 <button @click="syncTab = 'join'" :class="syncTab === 'join' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2 rounded-lg text-xs font-bold">加入房間</button>
                 <button @click="syncTab = 'create'" :class="syncTab === 'create' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2 rounded-lg text-xs font-bold">開新房間</button>
             </div>
             <div v-if="syncTab === 'join'" class="space-y-4">
-                <input type="number" inputmode="numeric" v-model="roomInput" class="input-bg w-full text-center text-4xl font-mono py-4 rounded-2xl tracking-widest outline-none" placeholder="0000">
+                <input type="number" v-model="roomInput" class="input-bg w-full text-center text-4xl font-mono py-4 rounded-2xl outline-none" placeholder="0000">
                 <div v-if="validRecentRooms.length > 0">
-                    <p class="text-[9px] text-gray-600 font-bold mb-2 uppercase tracking-widest">最近使用的房間</p>
+                    <p class="text-[9px] text-gray-600 font-bold mb-2 uppercase">最近房間</p>
                     <div class="flex flex-wrap gap-2">
                         <button v-for="rid in validRecentRooms" :key="rid" @click="roomInput = rid; joinRoom()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-500">#{{ rid }}</button>
                     </div>
                 </div>
-                <button @click="joinRoom" class="bg-emerald-600 w-full py-4 rounded-2xl font-bold text-sm active:scale-95">進入房間</button>
+                <button @click="joinRoom" class="bg-emerald-600 w-full py-4 rounded-2xl font-bold text-sm">進入房間</button>
             </div>
             <div v-else class="text-center space-y-4">
                 <div class="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl"><div class="text-4xl font-mono font-black text-white tracking-widest">{{ generatedRoomId }}</div></div>
-                <button @click="createRoom" class="bg-emerald-600 w-full py-4 rounded-2xl font-bold text-sm active:scale-95">建立並進入</button>
+                <button @click="createRoom" class="bg-emerald-600 w-full py-4 rounded-2xl font-bold text-sm">建立房間</button>
             </div>
         </div>
     </div>
@@ -169,13 +168,13 @@
                 <h2 class="font-black text-emerald-500 text-xl mb-4">{{ eventName || '結算報告' }}</h2>
                 <div class="space-y-3 mb-6">
                     <div v-for="(s, i) in settlements" :key="i" class="bg-white/5 border border-white/5 flex items-center justify-between p-4 rounded-2xl">
-                        <div class="flex items-center gap-2"><span class="text-rose-400 font-black text-sm">{{ s.from }}</span><i class="fas fa-arrow-right text-[10px] text-gray-700"></i><span class="text-emerald-500 font-black text-sm">{{ s.to }}</span></div>
+                        <div class="flex items-center gap-2 font-bold text-sm"><span class="text-rose-400">{{ s.from }}</span><i class="fas fa-arrow-right text-[10px]"></i><span class="text-emerald-500">{{ s.to }}</span></div>
                         <span class="font-mono text-xl text-emerald-400 font-black italic">$ {{ s.amount.toFixed(1) }}</span>
                     </div>
                 </div>
-                <div class="text-right border-t border-white/10 pt-4"><span class="text-[10px] text-gray-500 font-bold uppercase">總消費 HKD</span><div class="font-mono font-bold text-emerald-500 text-lg">${{ totalSpent.toFixed(1) }}</div></div>
+                <div class="text-right border-t border-white/10 pt-4"><div class="font-mono font-bold text-emerald-500 text-lg">總額: ${{ totalSpent.toFixed(1) }}</div></div>
             </div>
-            <div class="grid grid-cols-2 gap-3"><button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white"><i class="fas fa-copy mr-2"></i>複製文字</button><button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white"><i class="fas fa-image mr-2"></i>下載圖片</button></div>
+            <div class="grid grid-cols-2 gap-3"><button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white">複製文字</button><button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white">下載圖片</button></div>
             <button @click="showShareModal = false" class="w-full py-4 text-gray-500 text-xs font-bold">返回</button>
         </div>
     </div>
@@ -198,14 +197,13 @@ createApp({
         const eventName = ref(""); const users = ref([]); const expenses = ref([]);
         const newUser = ref(""); const isEditing = ref(false); const editingId = ref(null);
         const form = ref({ item: "", amount: null, currency: "HKD", payer: "", involved: [] });
-        const errors = ref({ user: false, item: false, amount: false, payer: false, involved: false });
+        const errors = ref({ item: false, amount: false, payer: false, involved: false });
         const lastSyncTime = ref("尚未同步"); const lastUpdateTS = ref(Date.now());
         const isSyncing = ref(false); const showSyncModal = ref(false); const syncTab = ref('join');
         const showShareModal = ref(false); const roomId = ref(null);
         const roomInput = ref(""); const generatedRoomId = ref(""); 
-        const currentRate = ref(1); const rateTime = ref(""); const validRecentRooms = ref([]);
+        const currentRate = ref(1); const rateTime = ref("即時"); const validRecentRooms = ref([]);
 
-        // 監聽輸入以移除紅框
         watch(() => form.value.item, (v) => { if(v) errors.value.item = false; });
         watch(() => form.value.amount, (v) => { if(v > 0) errors.value.amount = false; });
         watch(() => form.value.payer, (v) => { if(v) errors.value.payer = false; });
@@ -220,19 +218,6 @@ createApp({
             } else { localStorage.setItem('mathGod_local', JSON.stringify(data)); }
         };
 
-        const manualSync = () => {
-            if (!roomId.value || isSyncing.value) return;
-            isSyncing.value = true;
-            db.ref('rooms/' + roomId.value).once('value').then(s => {
-                const v = s.val();
-                if(v) {
-                    users.value = v.users || []; expenses.value = v.expenses || []; eventName.value = v.eventName || "";
-                    lastSyncTime.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                }
-                setTimeout(() => { isSyncing.value = false; }, 800);
-            });
-        };
-
         const handleCurrencyChange = async () => {
             if (form.value.currency === 'HKD') { currentRate.value = 1; rateTime.value = "即時"; return; }
             try {
@@ -244,14 +229,10 @@ createApp({
         };
 
         const appendDate = (e) => {
-            const newDate = e.target.value;
-            if(!newDate) return;
+            const newDate = e.target.value; if(!newDate) return;
             const datePattern = /\d{4}-\d{2}-\d{2}/;
-            if (datePattern.test(eventName.value)) {
-                eventName.value = eventName.value.replace(datePattern, newDate);
-            } else {
-                eventName.value += (eventName.value ? " " : "") + newDate;
-            }
+            if (datePattern.test(eventName.value)) { eventName.value = eventName.value.replace(datePattern, newDate); }
+            else { eventName.value += (eventName.value ? " " : "") + newDate; }
             saveData();
         };
 
@@ -259,132 +240,98 @@ createApp({
             const rid = roomInput.value.toString().trim();
             if(!rid) return;
             const snap = await db.ref('rooms/' + rid).once('value');
-            if(!snap.exists()) { alert("⚠️ 房間不存在"); return; }
-            roomId.value = rid;
-            roomRef = db.ref('rooms/' + rid);
-            
-            // 記憶最近房間
+            if(!snap.exists()) { alert("房號不存在"); return; }
+            roomId.value = rid; roomRef = db.ref('rooms/' + rid);
             let recent = JSON.parse(localStorage.getItem('mathGod_recent') || '[]');
             recent = [rid, ...recent.filter(r => r !== rid)].slice(0, 5);
             localStorage.setItem('mathGod_recent', JSON.stringify(recent));
             validRecentRooms.value = recent;
-
             const d = snap.val();
             users.value = d.users || []; expenses.value = d.expenses || []; eventName.value = d.eventName || "";
             roomRef.on('value', s => {
-                const v = s.val(); if(v) { 
-                    users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; 
-                    lastSyncTime.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); 
-                }
+                const v = s.val(); if(v) { users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; lastSyncTime.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
             });
             showSyncModal.value = false;
         };
 
         const createRoom = () => {
-            roomId.value = generatedRoomId.value;
-            roomRef = db.ref('rooms/' + roomId.value);
-            saveData();
-            let recent = JSON.parse(localStorage.getItem('mathGod_recent') || '[]');
-            recent = [roomId.value, ...recent.filter(r => r !== roomId.value)].slice(0, 5);
-            localStorage.setItem('mathGod_recent', JSON.stringify(recent));
-            showSyncModal.value = false;
+            roomId.value = generatedRoomId.value; roomRef = db.ref('rooms/' + roomId.value);
+            saveData(); showSyncModal.value = false;
         };
 
-        const addExpense = () => {
-            errors.value.item = !form.value.item;
-            errors.value.amount = (!form.value.amount || form.value.amount <= 0);
-            errors.value.payer = !form.value.payer;
-            errors.value.involved = form.value.involved.length === 0;
-            if(errors.value.item || errors.value.amount || errors.value.payer || errors.value.involved) return;
-            
-            const exp = {
-                id: isEditing.value ? editingId.value : Date.now(),
-                item: form.value.item, hkd: form.value.amount * currentRate.value,
-                payer: form.value.payer, involved: [...form.value.involved],
-                origAmount: form.value.amount, origCurrency: form.value.currency
-            };
-            if(isEditing.value) {
-                const idx = expenses.value.findIndex(e => e.id === editingId.value);
-                if(idx !== -1) expenses.value[idx] = exp;
-            } else { expenses.value.unshift(exp); }
-            cancelEdit(); saveData();
-        };
-
-        const editExpense = (i) => {
-            const e = expenses.value[i]; editingId.value = e.id;
-            form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency, payer: e.payer, involved: [...e.involved] };
-            isEditing.value = true; handleCurrencyChange();
-            window.scrollTo({ top: 100, behavior: 'smooth' });
-        };
-
-        const cancelEdit = () => {
-            isEditing.value = false; editingId.value = null;
-            form.value = { item: "", amount: null, currency: "HKD", payer: users.value[0]||"", involved: [...users.value] };
-            errors.value = { user: false, item: false, amount: false, payer: false, involved: false };
-        };
-
-        const resetAll = async () => {
-            if(confirm("確定清除所有紀錄？")) {
-                if(roomId.value) await db.ref('rooms/' + roomId.value).remove();
-                localStorage.removeItem(roomId.value ? `mathGod_room_${roomId.value}` : 'mathGod_local');
-                window.location.reload();
+        const settlements = computed(() => {
+            let bals = {}; users.value.forEach(u => bals[u] = 0);
+            expenses.value.forEach(e => {
+                bals[e.payer] += e.hkd; const s = e.hkd / (e.involved.length || 1);
+                e.involved.forEach(u => bals[u] -= s);
+            });
+            let d = [], c = [], res = [];
+            for (let u in bals) { if (bals[u] < -0.01) d.push({n: u, a: Math.abs(bals[u])}); else if (bals[u] > 0.01) c.push({n: u, a: bals[u]}); }
+            let i=0, j=0;
+            while(i<d.length && j<c.length) {
+                let m = Math.min(d[i].a, c[j].a); res.push({from: d[i].n, to: c[j].n, amount: m});
+                d[i].a -= m; c[j].a -= m; if(d[i].a < 0.01) i++; if(c[j].a < 0.01) j++;
             }
-        };
+            return res;
+        });
 
         onMounted(async () => {
             const local = JSON.parse(localStorage.getItem('mathGod_local') || '{}');
             if(local.users) { users.value = local.users; expenses.value = local.expenses || []; eventName.value = local.eventName || ""; }
             generatedRoomId.value = Math.floor(1000 + Math.random() * 9000).toString();
-            
-            // 載入並檢查最近房間是否依然有效
             const recent = JSON.parse(localStorage.getItem('mathGod_recent') || '[]');
             const checked = [];
-            for(let rid of recent) {
-                const s = await db.ref('rooms/'+rid).once('value');
-                if(s.exists()) checked.push(rid);
-            }
+            for(let rid of recent) { const s = await db.ref('rooms/'+rid).once('value'); if(s.exists()) checked.push(rid); }
             validRecentRooms.value = checked;
         });
 
         return {
             eventName, users, expenses, newUser, form, isEditing, errors, showSyncModal, syncTab, showShareModal,
-            totalSpent, roomId, roomInput, generatedRoomId, lastSyncTime, isSyncing, currentRate, rateTime, validRecentRooms,
+            roomId, roomInput, generatedRoomId, lastSyncTime, isSyncing, currentRate, rateTime, validRecentRooms,
+            totalSpent: computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0)),
             daysRemaining: computed(() => Math.max(0, Math.ceil(((lastUpdateTS.value + 2592000000) - Date.now()) / 86400000))),
-            settlements: computed(() => {
-                let bals = {}; users.value.forEach(u => bals[u] = 0);
-                expenses.value.forEach(e => {
-                    bals[e.payer] += e.hkd; const s = e.hkd / e.involved.length;
-                    e.involved.forEach(u => bals[u] -= s);
-                });
-                let d = [], c = [], res = [];
-                for (let u in bals) { if (bals[u] < -0.01) d.push({n: u, a: Math.abs(bals[u])}); else if (bals[u] > 0.01) c.push({n: u, a: bals[u]}); }
-                let i=0, j=0;
-                while(i<d.length && j<c.length) {
-                    let m = Math.min(d[i].a, c[j].a); res.push({from: d[i].n, to: c[j].n, amount: m});
-                    d[i].a -= m; c[j].a -= m; if(d[i].a < 0.01) i++; if(c[j].a < 0.01) j++;
-                }
-                return res;
-            }),
+            settlements,
             addUser: () => {
-                const n = newUser.value.trim();
-                if(!n || users.value.includes(n)) return;
-                users.value.push(n); form.value.involved.push(n);
-                if(!form.value.payer) form.value.payer = n;
+                const n = newUser.value.trim(); if(!n || users.value.includes(n)) return;
+                users.value.push(n); form.value.involved.push(n); if(!form.value.payer) form.value.payer = n;
                 newUser.value = ""; saveData();
             },
-            addExpense, editExpense, cancelEdit, joinRoom, createRoom, resetAll, manualSync, appendDate, handleCurrencyChange, saveData,
+            addExpense: () => {
+                errors.value.item = !form.value.item; errors.value.amount = (!form.value.amount || form.value.amount <= 0);
+                errors.value.payer = !form.value.payer; errors.value.involved = form.value.involved.length === 0;
+                if(errors.value.item || errors.value.amount || errors.value.payer || errors.value.involved) return;
+                const exp = { id: isEditing.value ? editingId.value : Date.now(), item: form.value.item, hkd: form.value.amount * currentRate.value, payer: form.value.payer, involved: [...form.value.involved], origAmount: form.value.amount, origCurrency: form.value.currency };
+                if(isEditing.value) { const idx = expenses.value.findIndex(e => e.id === editingId.value); if(idx !== -1) expenses.value[idx] = exp; }
+                else { expenses.value.unshift(exp); }
+                isEditing.value = false; editingId.value = null;
+                form.value = { item: "", amount: null, currency: "HKD", payer: users.value[0]||"", involved: [...users.value] };
+                saveData();
+            },
+            editExpense: (i) => {
+                const e = expenses.value[i]; editingId.value = e.id;
+                form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency, payer: e.payer, involved: [...e.involved] };
+                isEditing.value = true; handleCurrencyChange(); window.scrollTo({ top: 100, behavior: 'smooth' });
+            },
+            cancelEdit: () => {
+                isEditing.value = false; editingId.value = null;
+                form.value = { item: "", amount: null, currency: "HKD", payer: users.value[0]||"", involved: [...users.value] };
+            },
+            resetAll: () => {
+                if(confirm("確定清除所有紀錄並登出？")) { localStorage.clear(); window.location.reload(); }
+            },
+            manualSync, appendDate, handleCurrencyChange, saveData, joinRoom, createRoom,
             removeUser: (i) => { users.value.splice(i,1); saveData(); },
             removeExpense: (i) => { expenses.value.splice(i,1); saveData(); },
             toggleSelectAll: () => { form.value.involved = form.value.involved.length === users.value.length ? [] : [...users.value] },
-            renewRoom: () => { saveData(); alert("已續期 30 日"); },
+            renewRoom: () => { saveData(); alert("已續期"); },
             copyText: () => {
-                let msg = `【${eventName.value || '數神結算'}】\n總額: $${totalSpent.value.toFixed(1)}\n\n`;
+                let msg = `【${eventName.value || '結算'}】\n總額: $${expenses.value.reduce((s, e) => s + e.hkd, 0).toFixed(1)}\n\n`;
                 settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
                 navigator.clipboard.writeText(msg); alert("已複製文字");
             },
             generateImage: async () => {
                 const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 });
-                const link = document.createElement('a'); link.download = '結算報告.png'; link.href = canvas.toDataURL(); link.click();
+                const link = document.createElement('a'); link.download = '結算.png'; link.href = canvas.toDataURL(); link.click();
             }
         }
     }
