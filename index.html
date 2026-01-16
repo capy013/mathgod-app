@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>數神 - 旗艦穩定版</title>
+    <title>數神 - 旗艦正式版</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,7 +31,7 @@
     <header class="evergreen-gradient p-5 sticky top-0 z-20 shadow-xl rounded-b-[2rem]">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-black italic tracking-tighter"><i class="fas fa-bolt mr-1 text-yellow-400"></i>數神</h1>
-            <div v-if="roomId" class="status-badge" @click="manualSync">
+            <div v-if="roomId" class="status-badge">
                 <i class="fas fa-sync-alt" :class="{'animate-spin': isSyncing}"></i>
                 <span>房間: {{ roomId }}</span>
             </div>
@@ -61,7 +61,7 @@
 
         <section class="card-bg rounded-[2rem] p-6 border border-white/5 shadow-2xl">
             <div class="space-y-4">
-                <input v-model="form.item" @input="errors.item = false" :class="{'input-error': errors.item}" type="text" placeholder="消費項目" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
+                <input v-model="form.item" @input="errors.item = false" :class="{'input-error': errors.item}" type="text" placeholder="消費項目 (例如: 午餐)" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
                 
                 <div class="flex gap-3">
                     <select v-model="form.currency" @change="handleCurrencyChange" class="input-bg p-4 rounded-2xl text-sm w-1/3 font-black outline-none">
@@ -74,7 +74,7 @@
                     <div class="flex-1">
                         <input v-model.number="form.amount" @input="errors.amount = false" :class="{'input-error': errors.amount}" type="number" inputmode="decimal" placeholder="金額" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
                         <div v-if="form.currency !== 'HKD'" class="small-detail text-right text-emerald-500 mt-1">
-                            1 {{ form.currency }} = {{ currentRate.toFixed(4) }} HKD ({{ rateTime }})
+                            1 {{ form.currency }} = {{ currentRate.toFixed(4) }} HKD
                         </div>
                     </div>
                 </div>
@@ -105,11 +105,10 @@
         </section>
 
         <section class="space-y-3 pb-20">
-            <h3 v-if="expenses.length > 0" class="small-detail uppercase ml-2 tracking-widest text-gray-500">History 歷史紀錄</h3>
             <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-500 active:opacity-60 cursor-pointer">
                 <div class="flex-1 min-w-0 pr-4">
                     <div class="font-black text-sm text-gray-100 truncate">{{ exp.item }}</div>
-                    <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付款)</div>
+                    <div class="text-[10px] text-gray-500">HKD ${{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付)</div>
                 </div>
                 <button @click.stop="removeExpense(idx)" class="text-red-500/30 p-2"><i class="fas fa-trash-alt"></i></button>
             </div>
@@ -125,7 +124,7 @@
         <div class="w-full max-w-md mx-auto mt-4 mb-20">
             <div class="bg-white/5 p-4 rounded-2xl mb-4 flex gap-6 items-center justify-center border border-white/10">
                 <label class="flex items-center gap-2 text-[11px] font-black cursor-pointer">
-                    <input type="checkbox" v-model="shareOptions.showList" class="accent-emerald-500"> 消費紀錄
+                    <input type="checkbox" v-model="shareOptions.showList" class="accent-emerald-500"> 消費明細
                 </label>
                 <label class="flex items-center gap-2 text-[11px] font-black cursor-pointer">
                     <input type="checkbox" v-model="shareOptions.showNote" class="accent-emerald-500"> 轉帳附註
@@ -134,21 +133,21 @@
 
             <div id="capture-zone" class="bg-[#121212] p-8 rounded-[2.5rem] border border-gray-800 mb-6 shadow-2xl relative">
                 <div class="flex justify-between items-start mb-8 pb-6 border-b border-white/5">
-                    <div><h2 class="font-black text-emerald-500 text-2xl tracking-tighter">{{ eventName || '活動結算' }}</h2><p class="small-detail mt-1">{{ new Date().toLocaleDateString() }}</p></div>
-                    <div class="text-right"><div class="small-detail">總計 (HKD)</div><div class="font-mono font-black text-emerald-400 text-xl">${{ totalSpent.toFixed(1) }}</div></div>
+                    <div><h2 class="font-black text-emerald-500 text-2xl tracking-tighter">{{ eventName || '活動結算' }}</h2><p class="small-detail mt-1 uppercase">{{ new Date().toLocaleDateString() }}</p></div>
+                    <div class="text-right"><div class="small-detail">總支出 (HKD)</div><div class="font-mono font-black text-emerald-400 text-xl">${{ totalSpent.toFixed(1) }}</div></div>
                 </div>
 
                 <div class="space-y-4 mb-8">
                     <div v-for="(s, i) in settlements" :key="i" class="bg-white/[0.03] flex items-center justify-between p-5 rounded-2xl border border-white/5">
                         <div class="flex items-center gap-3 font-black text-[13px]"><span class="text-rose-400">{{ s.from }}</span><i class="fas fa-arrow-right text-gray-700"></i><span class="text-emerald-500">{{ s.to }}</span></div>
-                        <span class="font-mono text-xl text-emerald-400 font-black italic">$ {{ s.amount.toFixed(1) }}</span>
+                        <span class="font-mono text-xl text-emerald-400 font-black italic">HKD ${{ s.amount.toFixed(1) }}</span>
                     </div>
                 </div>
 
                 <div v-if="shareOptions.showList" class="mt-8 pt-6 border-t border-white/5 space-y-2">
-                    <h3 class="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">消費紀錄明細</h3>
+                    <h3 class="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">📋 消費紀錄附註</h3>
                     <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-[10px] pb-1 border-b border-white/5">
-                        <span class="text-gray-300 font-bold">{{ exp.item }} <span class="text-gray-600 font-normal">({{ exp.payer }})</span></span>
+                        <span class="text-gray-300 font-bold">{{ exp.item }} <span class="text-gray-600 font-normal">({{ exp.payer }}付)</span></span>
                         <span class="font-mono text-emerald-500 font-black">${{ exp.hkd.toFixed(1) }}</span>
                     </div>
                 </div>
@@ -157,14 +156,12 @@
                     <p class="text-[11px] text-emerald-200/70 italic font-black">「大家對對佢，冇問題就跟上面轉帳啦！」</p>
                 </div>
 
-                <div class="mt-10 pt-6 text-center opacity-10">
-                    <span class="text-[8px] font-black tracking-[0.4em] uppercase">Powered by 数神 MathGod</span>
-                </div>
+                <div class="mt-10 pt-6 text-center opacity-10"><span class="text-[8px] font-black tracking-[0.4em] uppercase">Powered by 数神 MathGod</span></div>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
-                <button @click="copyText" class="bg-gray-800 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">複製文字</button>
-                <button @click="generateImage" class="bg-emerald-600 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">下載圖片</button>
+                <button @click="copyText" class="bg-gray-800 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">複製詳盡文字</button>
+                <button @click="generateImage" class="bg-emerald-600 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">下載高清圖片</button>
             </div>
         </div>
     </div>
@@ -182,11 +179,7 @@
 </div>
 
 <script>
-const firebaseConfig = {
-    apiKey: "yFDRUSUFAFnZf6AGdsEA9LxSyLcZF75oIFfib5At", 
-    databaseURL: "https://mathgod2-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "mathgod2"
-};
+const firebaseConfig = { apiKey: "yFDRUSUFAFnZf6AGdsEA9LxSyLcZF75oIFfib5At", databaseURL: "https://mathgod2-default-rtdb.asia-southeast1.firebasedatabase.app/", projectId: "mathgod2" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -209,67 +202,36 @@ createApp({
             localStorage.setItem('mathGod_local', JSON.stringify(data));
         };
 
-        const resetLocal = () => {
-            if(confirm("確定清除本地資料？(雲端房間唔會受影響)")) {
-                localStorage.clear(); window.location.reload();
-            }
-        };
+        const resetLocal = () => { if(confirm("確定清除本地資料？")) { localStorage.clear(); window.location.reload(); } };
 
         const addExpense = () => {
-            errors.value.item = !form.value.item;
-            errors.value.amount = (!form.value.amount || form.value.amount <= 0);
-            errors.value.payer = !form.value.payer;
-            errors.value.involved = form.value.involved.length === 0;
+            errors.value.item = !form.value.item; errors.value.amount = (!form.value.amount || form.value.amount <= 0);
+            errors.value.payer = !form.value.payer; errors.value.involved = form.value.involved.length === 0;
             if(Object.values(errors.value).some(v => v)) return;
 
-            const exp = {
-                id: isEditing.value ? editingId.value : Date.now(),
-                item: form.value.item,
-                hkd: form.value.amount * currentRate.value,
-                payer: form.value.payer,
-                involved: [...form.value.involved],
-                origAmount: form.value.amount,
-                origCurrency: form.value.currency
-            };
-
-            if(isEditing.value) {
-                const idx = expenses.value.findIndex(e => e.id === editingId.value);
-                expenses.value[idx] = exp;
-            } else {
-                expenses.value.unshift(exp);
-            }
-            isEditing.value = false; editingId.value = null;
-            form.value.item = ""; form.value.amount = null;
-            saveData();
+            const exp = { id: isEditing.value ? editingId.value : Date.now(), item: form.value.item, hkd: form.value.amount * currentRate.value, payer: form.value.payer, involved: [...form.value.involved], origAmount: form.value.amount, origCurrency: form.value.currency };
+            if(isEditing.value) { const idx = expenses.value.findIndex(e => e.id === editingId.value); expenses.value[idx] = exp; }
+            else { expenses.value.unshift(exp); }
+            isEditing.value = false; editingId.value = null; form.value.item = ""; form.value.amount = null; saveData();
         };
 
         const handleCurrencyChange = async () => {
-            if (form.value.currency === 'HKD') { currentRate.value = 1; rateTime.value = "即時"; return; }
-            try {
-                const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`);
-                const d = await res.json();
-                currentRate.value = d.rates.HKD || 1;
-                rateTime.value = new Date().toLocaleTimeString();
-            } catch (e) {}
+            if (form.value.currency === 'HKD') { currentRate.value = 1; return; }
+            try { const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`); const d = await res.json(); currentRate.value = d.rates.HKD || 1; } catch (e) {}
         };
 
         const settlements = computed(() => {
             let bals = {}; users.value.forEach(u => bals[u] = 0);
             expenses.value.forEach(e => {
-                bals[e.payer] += e.hkd;
-                const split = e.hkd / (e.involved.length || 1);
+                bals[e.payer] += e.hkd; const split = e.hkd / (e.involved.length || 1);
                 e.involved.forEach(u => { if(bals[u] !== undefined) bals[u] -= split; });
             });
             let d = [], c = [], res = [];
-            for (let u in bals) {
-                if (bals[u] < -0.01) d.push({n: u, a: Math.abs(bals[u])});
-                else if (bals[u] > 0.01) c.push({n: u, a: bals[u]});
-            }
+            for (let u in bals) { if (bals[u] < -0.01) d.push({n: u, a: Math.abs(bals[u])}); else if (bals[u] > 0.01) c.push({n: u, a: bals[u]}); }
             let i=0, j=0;
             while(i<d.length && j<c.length) {
                 let m = Math.min(d[i].a, c[j].a); res.push({from: d[i].n, to: c[j].n, amount: m});
-                d[i].a -= m; c[j].a -= m;
-                if(d[i].a < 0.01) i++; if(c[j].a < 0.01) j++;
+                d[i].a -= m; c[j].a -= m; if(d[i].a < 0.01) i++; if(c[j].a < 0.01) j++;
             }
             return res;
         });
@@ -277,52 +239,46 @@ createApp({
         onMounted(() => {
             const local = JSON.parse(localStorage.getItem('mathGod_local') || '{}');
             if(local.users) { users.value = local.users; expenses.value = local.expenses || []; eventName.value = local.eventName || ""; }
-            const rid = localStorage.getItem('mathGod_room');
-            if(rid) { roomInput.value = rid; joinRoom(); }
+            const rid = localStorage.getItem('mathGod_room'); if(rid) { roomInput.value = rid; joinRoom(); }
         });
 
         const joinRoom = async () => {
-            const rid = roomInput.value; if(!rid) return;
-            isSyncing.value = true;
+            const rid = roomInput.value; if(!rid) return; isSyncing.value = true;
             const snap = await db.ref('rooms/' + rid).get();
             if(snap.exists()) {
-                roomId.value = rid;
-                db.ref('rooms/' + rid).on('value', s => {
-                    const v = s.val();
-                    if(v) { users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; }
-                });
+                roomId.value = rid; db.ref('rooms/' + rid).on('value', s => { const v = s.val(); if(v) { users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; } });
                 showSyncModal.value = false;
-            }
-            isSyncing.value = false;
+            } isSyncing.value = false;
         };
 
         return {
-            eventName, users, expenses, newUser, form, isEditing, errors, showSyncModal, showShareModal,
-            shareOptions, totalSpent: computed(() => expenses.value.reduce((s, e) => s + (e.hkd || 0), 0)),
-            settlements, roomId, roomInput, isSyncing, currentRate, rateTime,
-            resetLocal, addExpense, handleCurrencyChange, saveData, joinRoom,
+            eventName, users, expenses, newUser, form, isEditing, errors, showSyncModal, showShareModal, shareOptions, totalSpent: computed(() => expenses.value.reduce((s, e) => s + (e.hkd || 0), 0)), settlements, roomId, roomInput, isSyncing, currentRate, rateTime, resetLocal, addExpense, handleCurrencyChange, saveData, joinRoom,
             addUser: () => { const n = newUser.value.trim(); if(!n || users.value.includes(n)) return; users.value.push(n); form.value.involved.push(n); newUser.value = ""; saveData(); },
             removeUser: (i) => { users.value.splice(i,1); saveData(); },
             removeExpense: (i) => { expenses.value.splice(i,1); saveData(); },
             editExpense: (i) => {
-                const e = expenses.value[i]; editingId.value = e.id;
-                form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency || 'HKD', payer: e.payer, involved: [...e.involved] };
-                isEditing.value = true; handleCurrencyChange();
-                Object.keys(errors.value).forEach(k => errors.value[k] = false);
+                const e = expenses.value[i]; editingId.value = e.id; form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency || 'HKD', payer: e.payer, involved: [...e.involved] };
+                isEditing.value = true; handleCurrencyChange(); Object.keys(errors.value).forEach(k => errors.value[k] = false);
             },
             toggleSelectAll: () => { form.value.involved = (form.value.involved.length === users.value.length) ? [] : [...users.value]; errors.value.involved = false; },
             appendDate: (e) => { eventName.value += " (" + e.target.value + ")"; saveData(); },
             createRoom: () => { roomId.value = Math.floor(1000 + Math.random() * 9000).toString(); saveData(); showSyncModal.value = false; },
             copyText: () => {
-                let msg = `【${eventName.value || '結算'}】\n總額: HKD ${expenses.value.reduce((s,e)=>s+e.hkd,0).toFixed(1)}\n\n`;
-                settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
-                if(shareOptions.value.showNote) msg += `\n大家對對佢，冇問題就跟下面轉帳啦！`;
-                navigator.clipboard.writeText(msg); alert("文字已複製");
+                let msg = `【${eventName.value || '數神結算'}】\n`;
+                msg += `📅 日期: ${new Date().toLocaleDateString()}\n`;
+                msg += `💰 總額: HKD $${expenses.value.reduce((s,e)=>s+e.hkd,0).toFixed(1)}\n\n`;
+                msg += `💸 轉帳指引：\n`;
+                settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: HKD $${s.amount.toFixed(1)}\n`);
+                
+                if(shareOptions.value.showList) {
+                    msg += `\n📋 消費紀錄附註：\n`;
+                    expenses.value.forEach(e => msg += `- ${e.item}: HKD $${e.hkd.toFixed(1)} (${e.payer}付)\n`);
+                }
+                
+                if(shareOptions.value.showNote) msg += `\n💡 大家對對佢，冇問題就跟上面轉帳啦！`;
+                navigator.clipboard.writeText(msg); alert("詳盡文字已複製，可以去貼上喇！");
             },
-            generateImage: async () => {
-                const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 });
-                const link = document.createElement('a'); link.download = '結算.png'; link.href = canvas.toDataURL(); link.click();
-            }
+            generateImage: async () => { const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 }); const link = document.createElement('a'); link.download = '數神結算.png'; link.href = canvas.toDataURL(); link.click(); }
         }
     }
 }).mount('#app');
