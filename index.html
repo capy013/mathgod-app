@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數神 - 同步模式版本</title>
+    <title>數神 MathGod</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,7 +20,9 @@
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
         .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s ease; }
         .input-error { border: 1px solid #ef4444 !important; background-color: #381a1a !important; }
-        .status-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
+        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; display: flex; align-items: center; gap: 4px; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spinning { animation: spin 0.6s linear; }
         input[type="date"]::-webkit-inner-spin-button, input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; -webkit-appearance: none; }
     </style>
 </head>
@@ -29,13 +31,19 @@
 <div id="app" v-cloak class="max-w-md mx-auto min-h-screen relative">
     
     <header class="evergreen-gradient text-white p-5 sticky top-0 z-20 shadow-lg rounded-b-3xl">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-4 h-8">
             <h1 class="text-2xl font-black italic tracking-tighter">
                 <i class="fas fa-bolt mr-1 text-yellow-400"></i>數神
             </h1>
-            <div class="flex flex-col items-end gap-1">
-                <div v-if="isOnline" class="status-badge">房間: {{ roomId }}</div>
-                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">進入同步模式</button>
+            <div class="flex flex-col items-end justify-center">
+                <div v-if="isOnline" class="flex flex-col items-end">
+                    <div class="status-badge">
+                        <i @click="manualSync" class="fas fa-sync-alt cursor-pointer hover:text-white" :class="{'spinning': isSyncing}"></i>
+                        <span>房間: {{ roomId }}</span>
+                    </div>
+                    <span class="text-[7px] text-white/40 font-mono mt-0.5">Sync: {{ lastSyncTime }}</span>
+                </div>
+                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">進入同步</button>
             </div>
         </div>
 
@@ -88,7 +96,7 @@
                                 參考匯率: 1 {{ form.currency }} ≈ {{ currentRate.toFixed(4) }} HKD
                             </span>
                             <span class="text-[8px] text-gray-600 font-mono">
-                                更新時間: {{ rateTime }}
+                                匯率更新: {{ rateTime }}
                             </span>
                         </div>
                         <p v-if="errors.amount" class="text-[10px] text-red-400 flex-1 text-right">＊請輸入有效金額</p>
@@ -172,21 +180,14 @@
                     </div>
                     <div v-if="settlements.length === 0" class="text-center text-gray-600 text-xs py-2">無須找數</div>
                 </div>
-                <div v-if="showDetails" class="border-t border-white/10 pt-4 space-y-2">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">消費詳情</p>
-                    <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-[11px] text-gray-400">
-                        <span>{{ exp.item }} ({{ exp.payer }})</span>
-                        <span>${{ exp.hkd.toFixed(1) }}</span>
-                    </div>
-                </div>
             </div>
             <div class="space-y-4">
                 <div class="flex justify-center items-center gap-2">
                     <input type="checkbox" v-model="showDetails" id="incDetails" class="accent-emerald-500 w-4 h-4"><label for="incDetails" class="text-sm text-gray-300">包含消費詳情</label>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-copy"></i> 複製結算文字</button>
-                    <button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-image"></i> 下載結算圖片</button>
+                    <button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-copy"></i> 複製文字</button>
+                    <button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95"><i class="fas fa-image"></i> 下載圖片</button>
                 </div>
                 <button @click="showShareModal = false" class="w-full py-4 text-gray-500 text-xs font-bold">返回</button>
             </div>
@@ -220,9 +221,11 @@ createApp({
         const form = ref({ item: "", amount: null, currency: "HKD", payer: "", involved: [] });
         const errors = ref({ item: false, amount: false, payer: false, involved: false });
         const isEditing = ref(false);
-        const editingData = ref(null); // 用於暫存正在編輯的完整原始資料
+        const editingItemBackup = ref(null); 
         const currentRate = ref(1);
         const rateTime = ref("---");
+        const lastSyncTime = ref("尚未同步");
+        const isSyncing = ref(false);
         const showSyncModal = ref(false);
         const showShareModal = ref(false);
         const showDetails = ref(false);
@@ -248,7 +251,25 @@ createApp({
         const saveData = () => {
             const data = { users: users.value, expenses: expenses.value, eventName: eventName.value, lastUpdate: Date.now() };
             localStorage.setItem('mathGodV4', JSON.stringify(data));
-            if (isOnline.value && roomRef) roomRef.set(data);
+            if (isOnline.value && roomRef) {
+                roomRef.set(data);
+                lastSyncTime.value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
+        };
+
+        const manualSync = () => {
+            if(!isOnline.value || isSyncing.value) return;
+            isSyncing.value = true;
+            roomRef.once('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    users.value = data.users || [];
+                    expenses.value = data.expenses || [];
+                    eventName.value = data.eventName || "";
+                    lastSyncTime.value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                }
+                setTimeout(() => { isSyncing.value = false; }, 600);
+            });
         };
 
         const addUser = () => {
@@ -273,21 +294,16 @@ createApp({
                 origAmount: form.value.amount,
                 origCurrency: form.value.currency
             });
-            form.value.item = ""; form.value.amount = null; isEditing.value = false; editingData.value = null;
+            form.value.item = ""; form.value.amount = null; isEditing.value = false; editingItemBackup.value = null;
             saveData();
         };
 
         const editExpense = (idx) => {
-            // 如果目前正在編輯其他項目，先將舊項目放回去
-            if (isEditing.value && editingData.value) {
-                expenses.value.unshift({...editingData.value});
-                // 因為 unshift 改變了 index，重新獲取我們要編輯的項目的正確 index
-                // 但為了簡單與準確，我們根據點擊的 idx 取出目標後再整理
+            if (isEditing.value && editingItemBackup.value) {
+                expenses.value.unshift({...editingItemBackup.value});
             }
-            
             const exp = expenses.value.splice(idx, 1)[0];
-            editingData.value = {...exp}; // 存儲原始對象備份
-            
+            editingItemBackup.value = {...exp};
             form.value = { 
                 item: exp.item, 
                 amount: exp.origAmount || exp.hkd, 
@@ -295,7 +311,6 @@ createApp({
                 payer: exp.payer, 
                 involved: [...exp.involved] 
             };
-            
             isEditing.value = true;
             handleCurrencyChange();
             window.scrollTo({ top: 100, behavior: 'smooth' });
@@ -324,27 +339,19 @@ createApp({
         });
 
         const handleCurrencyChange = async () => {
-            if (form.value.currency === 'HKD') { 
-                currentRate.value = 1; 
-                rateTime.value = new Date().toLocaleTimeString();
-                return; 
-            }
+            if (form.value.currency === 'HKD') { currentRate.value = 1; rateTime.value = "即時"; return; }
             try {
                 const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`);
                 const data = await res.json();
                 currentRate.value = data.rates.HKD || 1;
-                rateTime.value = new Date(data.time_last_update_unix * 1000).toLocaleString();
+                rateTime.value = new Date(data.time_last_update_unix * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             } catch (e) { alert("匯率更新失敗"); }
         };
 
         const copyText = () => {
             let msg = `【⚡️數神結算】${eventName.value || '結算如下'}\n請跟住以下指示畀錢：\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
             settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
-            if(showDetails.value) {
-                msg += `\n--- 消費詳情 ---\n`;
-                expenses.value.forEach(e => msg += `${e.item}: $${e.hkd.toFixed(1)}\n`);
-            }
-            navigator.clipboard.writeText(msg).then(() => alert("文字已複製！"));
+            navigator.clipboard.writeText(msg).then(() => alert("已複製文字"));
         };
 
         const generateImage = async () => {
@@ -365,17 +372,18 @@ createApp({
                 if(data) {
                     const thirtyDays = 2592000000;
                     if (data.lastUpdate && (Date.now() - data.lastUpdate > thirtyDays)) {
-                        roomRef.remove(); alert("房間已過期移除"); resetAll(); return;
+                        roomRef.remove(); alert("房間已過期"); resetAll(); return;
                     }
                     users.value = data.users || [];
                     expenses.value = data.expenses || [];
                     eventName.value = data.eventName || "";
+                    lastSyncTime.value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 }
             });
         };
 
         const resetAll = () => {
-            if(confirm("確定清除所有？這將清空雲端房間及本地資料。")) {
+            if(confirm("確定清除所有？")) {
                 if (isOnline.value && roomRef) roomRef.remove();
                 localStorage.removeItem('mathGodV4');
                 location.reload();
@@ -391,8 +399,8 @@ createApp({
 
         return {
             eventName, users, expenses, newUser, form, errors, isEditing, showSyncModal, showShareModal, showDetails,
-            totalSpent, settlements, isOnline, roomId, roomInput, currentRate, rateTime,
-            addUser, addExpense, editExpense, openShareModal: () => showShareModal.value = true,
+            totalSpent, settlements, isOnline, roomId, roomInput, currentRate, rateTime, lastSyncTime, isSyncing,
+            addUser, addExpense, editExpense, manualSync, openShareModal: () => showShareModal.value = true,
             openSyncModal: () => showSyncModal.value = true,
             copyText, generateImage, joinRoom, handleCurrencyChange, saveData, resetAll,
             removeUser: (i) => { users.value.splice(i,1); saveData(); },
