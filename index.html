@@ -16,9 +16,10 @@
         [v-cloak] { display: none; }
         body { background-color: #121212; color: #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
+        .update-gradient { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
-        .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.3s; }
-        .input-error { border: 1px solid #ef4444 !important; background-color: #451a1a !important; }
+        .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s ease; }
+        .input-error { border: 1px solid #ef4444 !important; background-color: #381a1a !important; }
         .status-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
         input[type="date"]::-webkit-inner-spin-button, input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; -webkit-appearance: none; }
     </style>
@@ -34,7 +35,7 @@
             </h1>
             <div class="flex flex-col items-end gap-1">
                 <div v-if="isOnline" class="status-badge">房間: {{ roomId }}</div>
-                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95">進入同步模式</button>
+                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">進入同步模式</button>
             </div>
         </div>
 
@@ -56,7 +57,7 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <span v-for="(u, i) in users" :key="u" class="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-xs border border-emerald-500/20 flex items-center gap-2 font-bold">
-                    {{ u }} <button @click="removeUser(i)" class="opacity-40">&times;</button>
+                    {{ u }} <button @click="removeUser(i)" class="opacity-40 hover:opacity-100">&times;</button>
                 </span>
             </div>
         </section>
@@ -68,17 +69,24 @@
                     <p v-if="errors.item" class="text-[10px] text-red-400 mt-1 ml-2">＊請輸入項目名稱</p>
                 </div>
                 
-                <div class="flex gap-2">
-                    <select v-model="form.currency" @change="handleCurrencyChange" class="input-bg p-4 rounded-2xl text-sm w-1/3 font-bold">
-                        <option value="HKD">🇭🇰 HKD</option>
-                        <option value="JPY">🇯🇵 JPY</option>
-                        <option value="TWD">🇹🇼 TWD</option>
-                        <option value="CNY">🇨🇳 CNY</option>
-                        <option value="THB">🇹🇭 THB</option>
-                    </select>
-                    <div class="flex-1">
-                        <input v-model.number="form.amount" type="number" placeholder="金額" :class="{'input-error': errors.amount}" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
-                        <p v-if="errors.amount" class="text-[10px] text-red-400 mt-1 mr-2 text-right">＊請輸入有效金額</p>
+                <div class="flex flex-col gap-1">
+                    <div class="flex gap-2">
+                        <select v-model="form.currency" @change="handleCurrencyChange" class="input-bg p-4 rounded-2xl text-sm w-1/3 font-bold">
+                            <option value="HKD">🇭🇰 HKD</option>
+                            <option value="JPY">🇯🇵 JPY</option>
+                            <option value="TWD">🇹🇼 TWD</option>
+                            <option value="CNY">🇨🇳 CNY</option>
+                            <option value="THB">🇹🇭 THB</option>
+                        </select>
+                        <div class="flex-1">
+                            <input v-model.number="form.amount" type="number" placeholder="金額" :class="{'input-error': errors.amount}" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
+                        </div>
+                    </div>
+                    <div class="flex justify-between px-2">
+                        <span v-if="form.currency !== 'HKD'" class="text-[10px] text-gray-500 italic font-mono">
+                            參考匯率: 1 {{ form.currency }} ≈ {{ currentRate.toFixed(4) }} HKD
+                        </span>
+                        <p v-if="errors.amount" class="text-[10px] text-red-400 flex-1 text-right">＊請輸入有效金額</p>
                     </div>
                 </div>
 
@@ -103,7 +111,7 @@
                     </div>
                 </div>
 
-                <button @click="addExpense" class="evergreen-gradient w-full text-white font-black py-4 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
+                <button @click="addExpense" :class="isEditing ? 'update-gradient' : 'evergreen-gradient'" class="w-full text-white font-black py-4 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
                     {{ isEditing ? '更新紀錄' : '確認記帳' }} <span v-if="form.amount" class="opacity-70 text-xs">(${{ (form.amount * currentRate).toFixed(1) }} HKD)</span>
                 </button>
             </div>
@@ -111,18 +119,18 @@
 
         <section v-if="expenses.length > 0" class="space-y-3">
             <h3 class="text-[10px] font-bold text-gray-500 uppercase ml-2 tracking-widest">最近紀錄 (點擊可修改)</h3>
-            <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-600 active:opacity-50 transition-opacity cursor-pointer">
+            <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-600 active:opacity-50 transition-opacity cursor-pointer shadow-sm">
                 <div class="flex-1 min-w-0">
                     <div class="font-bold text-sm text-gray-200 truncate">{{ exp.item }}</div>
                     <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付)</div>
                 </div>
-                <button @click.stop="removeExpense(idx)" class="text-red-500/50 pl-4"><i class="fas fa-trash"></i></button>
+                <button @click.stop="removeExpense(idx)" class="text-red-500/50 pl-4 hover:text-red-500 transition-colors"><i class="fas fa-trash"></i></button>
             </div>
         </section>
 
         <div class="grid grid-cols-2 gap-3 mt-6" v-if="expenses.length > 0">
-             <button @click="openShareModal" class="bg-white/10 border border-white/20 py-4 rounded-2xl text-xs font-bold text-white"><i class="fas fa-share-alt mr-2"></i>結算分享</button>
-             <button @click="resetAll" class="bg-red-500/10 border border-red-500/20 py-4 rounded-2xl text-xs font-bold text-red-500"><i class="fas fa-trash-alt mr-2"></i>清除所有</button>
+             <button @click="openShareModal" class="bg-white/10 border border-white/20 py-4 rounded-2xl text-xs font-bold text-white active:bg-white/20 transition-all"><i class="fas fa-share-alt mr-2"></i>結算分享</button>
+             <button @click="resetAll" class="bg-red-500/10 border border-red-500/20 py-4 rounded-2xl text-xs font-bold text-red-500 active:bg-red-500/20 transition-all"><i class="fas fa-trash-alt mr-2"></i>清除所有</button>
         </div>
     </div>
 
@@ -141,7 +149,7 @@
                 <div class="flex justify-between items-start mb-4">
                     <div>
                         <h2 class="font-black text-emerald-500 text-xl">{{ eventName || '結算如下' }}</h2>
-                        <p class="text-[10px] text-gray-500 mt-1">請跟住以下指示畀錢：</p>
+                        <p class="text-[10px] text-gray-500 mt-1 font-bold">請跟住以下指示畀錢：</p>
                     </div>
                     <div class="text-right">
                         <div class="text-[10px] text-gray-500 font-bold uppercase">總消費</div>
@@ -196,7 +204,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let roomRef = null;
 
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, watch } = Vue;
 
 createApp({
     setup() {
@@ -216,6 +224,12 @@ createApp({
 
         const isOnline = computed(() => !!roomId.value);
         const totalSpent = computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0));
+
+        // 動態驗證監聽：輸入時自動消失警告
+        watch(() => form.value.item, (val) => { if(val) errors.value.item = false; });
+        watch(() => form.value.amount, (val) => { if(val > 0) errors.value.amount = false; });
+        watch(() => form.value.payer, (val) => { if(val) errors.value.payer = false; });
+        watch(() => form.value.involved, (val) => { if(val.length > 0) errors.value.involved = false; }, { deep: true });
 
         const validate = () => {
             errors.value.item = !form.value.item;
