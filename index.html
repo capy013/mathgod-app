@@ -264,21 +264,15 @@ createApp({
             }
         };
 
-        // 檢查最近房間是否仍生效
         const checkValidRooms = async () => {
             const rooms = JSON.parse(localStorage.getItem('recentRoomsV4') || '[]');
-            const valid = [];
-            const now = Date.now();
-            
+            const valid = []; const now = Date.now();
             for (const rid of rooms) {
                 try {
                     const snapshot = await db.ref('rooms/' + rid + '/lastUpdate').once('value');
                     const lastUpd = snapshot.val();
-                    // 如果雲端有資料且未超過30天 (2592000000ms)
-                    if (lastUpd && (now - lastUpd < 2592000000)) {
-                        valid.push(rid);
-                    }
-                } catch (e) { console.error("驗證失敗", rid); }
+                    if (lastUpd && (now - lastUpd < 2592000000)) { valid.push(rid); }
+                } catch (e) {}
             }
             validRecentRooms.value = valid.slice(0, 5);
             localStorage.setItem('recentRoomsV4', JSON.stringify(validRecentRooms.value));
@@ -291,10 +285,7 @@ createApp({
             checkValidRooms();
         };
 
-        const generateRoomNumber = () => {
-            let num = Math.floor(1000 + Math.random() * 9000).toString();
-            generatedRoomId.value = num;
-        };
+        const generateRoomNumber = () => { generatedRoomId.value = Math.floor(1000 + Math.random() * 9000).toString(); };
         generateRoomNumber();
 
         const joinRoom = () => {
@@ -327,7 +318,7 @@ createApp({
                 const data = await res.json();
                 currentRate.value = data.rates.HKD || 1;
                 rateTime.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            } catch (e) { console.error("匯率更新失敗"); }
+            } catch (e) {}
         };
 
         const copyText = () => {
@@ -372,8 +363,13 @@ createApp({
 
         const resetAll = () => {
             if(confirm("確定要清除紀錄？這會清除此房間的紀錄並登出房間。")) {
+                if(roomRef) { roomRef.off(); } // 停止 Firebase 監聽
+                // 清空內存變數
+                users.value = []; expenses.value = []; eventName.value = ""; roomId.value = null;
+                // 清除本地儲存
                 localStorage.removeItem('mathGodV4');
-                location.reload();
+                // 強制跳轉刷新，確保一切重置
+                window.location.href = window.location.pathname;
             }
         };
 
