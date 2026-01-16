@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>數神 - 旗艦修復版</title>
+    <title>數神 - 欄位徹底清空版</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
         [v-cloak] { display: none; }
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #000; color: white; }
         body { display: flex; justify-content: center; font-family: -apple-system, sans-serif; }
-        #app { width: 100%; max-width: 500px; min-height: 100vh; background-color: #121212; position: relative; padding-bottom: 50px; }
+        #app { width: 100%; max-width: 500px; min-height: 100vh; background-color: #121212; position: relative; padding-bottom: 60px; }
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
         .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; }
@@ -39,7 +39,7 @@
                         <i class="fas fa-sync-alt" :class="{'spinning': isSyncing}"></i>
                         <span>房間: {{ roomId }}</span>
                     </div>
-                    <span class="small-detail font-mono mt-1">最後同步: {{ lastSyncTime }}</span>
+                    <span class="small-detail font-mono mt-1">同步於: {{ lastSyncTime }}</span>
                 </div>
                 <button v-else @click.stop="showSyncModal = true" class="text-[10px] bg-white/20 px-4 py-2 rounded-xl font-black">同步模式</button>
             </div>
@@ -65,7 +65,7 @@
         <section class="card-bg p-5 rounded-3xl">
             <h2 class="font-black text-emerald-500 mb-4 text-[10px] uppercase tracking-widest">朋友列表</h2>
             <div class="flex gap-2">
-                <input v-model="newUser" @keyup.enter="addUser" class="input-bg flex-1 p-4 rounded-2xl text-sm outline-none font-bold" placeholder="輸入人名...">
+                <input v-model="newUser" @keyup.enter="addUser" class="input-bg flex-1 p-4 rounded-2xl text-sm outline-none font-bold" placeholder="輸入名稱...">
                 <button @click="addUser" class="bg-emerald-600 text-white px-6 rounded-2xl text-sm font-black active:scale-95">加入</button>
             </div>
             <div class="flex flex-wrap gap-2 mt-4">
@@ -75,9 +75,18 @@
             </div>
         </section>
 
-        <section class="card-bg rounded-[2rem] p-6 border border-white/5 shadow-2xl">
+        <section class="card-bg rounded-[2rem] p-6 border border-white/5 shadow-2xl relative">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xs font-black text-gray-400 uppercase tracking-widest">
+                    {{ isEditing ? '正在編輯項目' : '新增消費紀錄' }}
+                </h2>
+                <button @click="clearForm" class="text-[10px] text-red-500 font-bold flex items-center gap-1 bg-red-500/10 px-3 py-1 rounded-full">
+                    <i class="fas fa-eraser"></i> 清空輸入
+                </button>
+            </div>
+
             <div class="space-y-4">
-                <input v-model="form.item" :class="{'input-error': errors.item}" type="text" placeholder="消費項目" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
+                <input v-model="form.item" :class="{'input-error': errors.item}" type="text" placeholder="消費項目 (例如: 燒肉)" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
                 
                 <div class="flex gap-3">
                     <select v-model="form.currency" @change="handleCurrencyChange" class="input-bg p-4 rounded-2xl text-sm w-1/3 font-black outline-none">
@@ -90,21 +99,21 @@
                     <div class="flex-1">
                         <input v-model.number="form.amount" :class="{'input-error': errors.amount}" type="number" inputmode="decimal" placeholder="金額" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
                         <div v-if="form.currency !== 'HKD'" class="small-detail text-right text-emerald-500 mt-1">
-                            1 {{ form.currency }} ≈ {{ currentRate.toFixed(4) }} HKD (最後更新: {{ rateTime }})
+                            1 {{ form.currency }} = {{ currentRate.toFixed(4) }} HKD ({{ rateTime }})
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="small-detail ml-1">誰人付錢</label>
+                        <label class="small-detail ml-1">付款人</label>
                         <select v-model="form.payer" :class="{'input-error': errors.payer}" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
                             <option value="">選擇...</option>
                             <option v-for="u in users" :key="u" :value="u">{{ u }}</option>
                         </select>
                     </div>
                     <div class="space-y-1">
-                        <div class="flex justify-between ml-1"><label class="small-detail">參與分擔</label><button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-black">全選</button></div>
+                        <div class="flex justify-between ml-1"><label class="small-detail">參與人</label><button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-black">全選</button></div>
                         <div :class="{'input-error': errors.involved}" class="input-bg max-h-36 overflow-y-auto rounded-2xl p-3 text-[10px]">
                             <div v-for="u in users" :key="u" class="mb-2 flex items-center gap-2">
                                 <input type="checkbox" :value="u" v-model="form.involved" class="accent-emerald-500 w-4 h-4">
@@ -115,7 +124,7 @@
                 </div>
 
                 <button @click="addExpense" class="evergreen-gradient w-full text-white font-black py-4.5 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
-                    {{ isEditing ? '確認更新紀錄' : '確認記帳' }}
+                    {{ isEditing ? '確認更新' : '確認記帳' }}
                 </button>
             </div>
         </section>
@@ -125,14 +134,14 @@
             <div v-for="(exp, idx) in expenses" :key="exp.id" @click="editExpense(idx)" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-500 active:opacity-60 transition-all cursor-pointer">
                 <div class="flex-1 min-w-0 pr-4">
                     <div class="font-black text-sm text-gray-100 truncate">{{ exp.item }}</div>
-                    <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} (由 {{ exp.payer }} 付款)</div>
+                    <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付款)</div>
                 </div>
                 <button @click.stop="removeExpense(idx)" class="text-red-500/30 p-2"><i class="fas fa-trash-alt"></i></button>
             </div>
             
             <div class="grid grid-cols-2 gap-4 mt-8">
-                 <button @click="showShareModal = true" :disabled="expenses.length === 0" :class="expenses.length === 0 ? 'opacity-20' : 'active:scale-95'" class="bg-emerald-900/40 border border-emerald-500/20 py-4.5 rounded-2xl text-xs font-black text-emerald-400"><i class="fas fa-share-alt mr-2"></i>結算分享</button>
-                 <button @click="resetAll" class="bg-red-500/10 border border-red-500/20 py-4.5 rounded-2xl text-xs font-black text-red-500 active:scale-95"><i class="fas fa-trash-alt mr-2"></i>清除與登出</button>
+                 <button @click="showShareModal = true" :disabled="expenses.length === 0" :class="expenses.length === 0 ? 'opacity-20' : 'active:scale-95'" class="bg-emerald-900/40 border border-emerald-500/20 py-4.5 rounded-2xl text-xs font-black text-emerald-400"><i class="fas fa-file-invoice-dollar mr-2"></i>結算分享</button>
+                 <button @click="resetAll" class="bg-red-500/10 border border-red-500/20 py-4.5 rounded-2xl text-xs font-black text-red-500 active:scale-95"><i class="fas fa-sign-out-alt mr-2"></i>清除房間資料</button>
             </div>
         </section>
     </div>
@@ -140,8 +149,8 @@
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-8" @click.self="showSyncModal = false">
         <div class="card-bg w-full max-w-sm rounded-[2.5rem] p-8 border border-white/10 shadow-2xl">
             <div class="flex gap-2 mb-8 p-1.5 bg-black/40 rounded-2xl">
-                <button @click="syncTab = 'join'" :class="syncTab === 'join' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2.5 rounded-xl text-xs font-black">加入房間</button>
-                <button @click="syncTab = 'create'" :class="syncTab === 'create' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2.5 rounded-xl text-xs font-black">開新房間</button>
+                <button @click="syncTab = 'join'" :class="syncTab === 'join' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2.5 rounded-xl text-xs font-black">加入</button>
+                <button @click="syncTab = 'create'" :class="syncTab === 'create' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2.5 rounded-xl text-xs font-black">創建</button>
             </div>
             <div v-if="syncTab === 'join'" class="space-y-6">
                 <input type="number" inputmode="numeric" v-model="roomInput" class="input-bg w-full text-center text-5xl font-mono py-6 rounded-3xl outline-none border-emerald-500/30 border-2" placeholder="0000">
@@ -165,7 +174,7 @@
             <div id="capture-zone" class="bg-[#121212] p-8 rounded-[2.5rem] border border-gray-800 mb-6">
                 <div class="flex justify-between items-start mb-8 pb-6 border-b border-white/5">
                     <div><h2 class="font-black text-emerald-500 text-2xl tracking-tighter">{{ eventName || '結算報告' }}</h2><p class="small-detail mt-1 uppercase">{{ new Date().toLocaleDateString() }}</p></div>
-                    <div class="text-right"><div class="small-detail">總計</div><div class="font-mono font-black text-emerald-400 text-xl">${{ totalSpent.toFixed(1) }}</div></div>
+                    <div class="text-right"><div class="small-detail">總消費</div><div class="font-mono font-black text-emerald-400 text-xl">${{ totalSpent.toFixed(1) }}</div></div>
                 </div>
                 <div class="space-y-4">
                     <div v-for="(s, i) in settlements" :key="i" class="bg-white/[0.03] flex items-center justify-between p-5 rounded-2xl">
@@ -196,20 +205,36 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        // 基本資料
         const eventName = ref(""); const users = ref([]); const expenses = ref([]);
         const newUser = ref(""); const isEditing = ref(false); const editingId = ref(null);
+        
+        // 輸入框狀態
         const form = ref({ item: "", amount: null, currency: "HKD", payer: "", involved: [] });
         const errors = ref({ item: false, amount: false, payer: false, involved: false });
         
-        // 系統資料
+        // 系統狀態
         const lastSyncTime = ref("未連線"); const lastUpdateTS = ref(Date.now());
         const isSyncing = ref(false); const showSyncModal = ref(false); const syncTab = ref('join');
         const showShareModal = ref(false); const roomId = ref(null);
         const roomInput = ref(""); const generatedRoomId = ref(""); const validRecentRooms = ref([]);
         const currentRate = ref(1); const rateTime = ref("即時");
 
-        // 儲存邏輯
+        // 徹底清空輸入框的函數
+        const clearForm = () => {
+            form.value = {
+                item: "",
+                amount: null,
+                currency: "HKD",
+                payer: users.value.length > 0 ? users.value[0] : "",
+                involved: [...users.value]
+            };
+            isEditing.value = false;
+            editingId.value = null;
+            errors.value = { item: false, amount: false, payer: false, involved: false };
+            currentRate.value = 1;
+            rateTime.value = "即時";
+        };
+
         const saveData = () => {
             const now = Date.now(); lastUpdateTS.value = now;
             const data = { users: [...users.value], expenses: [...expenses.value], eventName: eventName.value, lastUpdate: now };
@@ -225,32 +250,62 @@ createApp({
             }
         };
 
-        // 重要：地毯式清除函數
         const resetAll = async () => {
-            if(confirm("⚠ 注意：這將會徹底刪除此房所有資料並且登出，動作不可撤銷。")) {
-                // 1. 手動將所有 Vue 內部欄位清空 (這步最關鍵，防止 UI 殘留)
-                eventName.value = "";
-                users.value = [];
-                expenses.value = [];
-                form.value = { item: "", amount: null, currency: "HKD", payer: "", involved: [] };
-                roomId.value = null;
-                
-                // 2. 切斷 Firebase 監聽
+            if(confirm("⚠ 注意：這將永久刪除雲端房間及本地所有暫存並登出。確定？")) {
                 if(roomRef) {
                     roomRef.off();
-                    await roomRef.remove(); // 雲端刪除
+                    await roomRef.remove();
                     roomRef = null;
                 }
-
-                // 3. 本地硬體清除
                 localStorage.clear();
-
-                // 4. 強制刷新頁面 (完全重啟 App)
-                window.location.href = window.location.pathname;
+                window.location.href = window.location.pathname; 
             }
         };
 
-        // 幣別換算
+        const addExpense = () => {
+            // 驗證
+            errors.value.item = !form.value.item;
+            errors.value.amount = (!form.value.amount || form.value.amount <= 0);
+            errors.value.payer = !form.value.payer;
+            errors.value.involved = form.value.involved.length === 0;
+            
+            if(Object.values(errors.value).some(v => v)) return;
+
+            const exp = {
+                id: isEditing.value ? editingId.value : Date.now(),
+                item: form.value.item,
+                hkd: form.value.amount * currentRate.value,
+                payer: form.value.payer,
+                involved: [...form.value.involved],
+                origAmount: form.value.amount,
+                origCurrency: form.value.currency
+            };
+
+            if(isEditing.value) {
+                const idx = expenses.value.findIndex(e => e.id === editingId.value);
+                if(idx !== -1) expenses.value[idx] = exp;
+            } else {
+                expenses.value.unshift(exp);
+            }
+
+            saveData();
+            clearForm(); // 關鍵：記帳成功後立即清空欄位
+        };
+
+        const editExpense = (i) => {
+            const e = expenses.value[i];
+            editingId.value = e.id;
+            form.value = {
+                item: e.item,
+                amount: e.origAmount,
+                currency: e.origCurrency,
+                payer: e.payer,
+                involved: [...e.involved]
+            };
+            isEditing.value = true;
+            handleCurrencyChange();
+        };
+
         const handleCurrencyChange = async () => {
             if (form.value.currency === 'HKD') { currentRate.value = 1; rateTime.value = "即時"; return; }
             try {
@@ -261,7 +316,6 @@ createApp({
             } catch (e) { console.error("Rate Error"); }
         };
 
-        // 結算邏輯
         const settlements = computed(() => {
             let bals = {}; users.value.forEach(u => bals[u] = 0);
             expenses.value.forEach(e => {
@@ -278,7 +332,6 @@ createApp({
             return res;
         });
 
-        // 初始化
         onMounted(() => {
             const local = JSON.parse(localStorage.getItem('mathGod_local') || '{}');
             if(local.users) { users.value = local.users; expenses.value = local.expenses || []; eventName.value = local.eventName || ""; }
@@ -292,27 +345,13 @@ createApp({
             settlements, roomId, roomInput, generatedRoomId, lastSyncTime, isSyncing, 
             daysRemaining: computed(() => Math.max(0, Math.ceil(((lastUpdateTS.value + 2592000000) - Date.now()) / 86400000))),
             currentRate, rateTime, validRecentRooms,
+            clearForm, // 暴露給 UI 使用
             addUser: () => {
                 const n = newUser.value.trim(); if(!n || users.value.includes(n)) return;
                 users.value.push(n); form.value.involved.push(n); if(!form.value.payer) form.value.payer = n;
                 newUser.value = ""; saveData();
             },
-            addExpense: () => {
-                errors.value.item = !form.value.item; errors.value.amount = (!form.value.amount || form.value.amount <= 0);
-                errors.value.payer = !form.value.payer; errors.value.involved = form.value.involved.length === 0;
-                if(Object.values(errors.value).some(v => v)) return;
-                const exp = { id: isEditing.value ? editingId.value : Date.now(), item: form.value.item, hkd: form.value.amount * currentRate.value, payer: form.value.payer, involved: [...form.value.involved], origAmount: form.value.amount, origCurrency: form.value.currency };
-                if(isEditing.value) { const idx = expenses.value.findIndex(e => e.id === editingId.value); if(idx !== -1) expenses.value[idx] = exp; }
-                else { expenses.value.unshift(exp); }
-                isEditing.value = false; editingId.value = null;
-                form.value = { item: "", amount: null, currency: "HKD", payer: users.value[0]||"", involved: [...users.value] };
-                saveData();
-            },
-            editExpense: (i) => {
-                const e = expenses.value[i]; editingId.value = e.id;
-                form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency, payer: e.payer, involved: [...e.involved] };
-                isEditing.value = true; handleCurrencyChange();
-            },
+            addExpense, editExpense,
             removeUser: (i) => { users.value.splice(i,1); saveData(); },
             removeExpense: (i) => { expenses.value.splice(i,1); saveData(); },
             toggleSelectAll: () => { form.value.involved = form.value.involved.length === users.value.length ? [] : [...users.value] },
