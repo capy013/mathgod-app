@@ -20,12 +20,13 @@
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
         .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
-        
-        /* 紅框強效樣式 */
         .input-error { border: 2px solid #ef4444 !important; background-color: #3d1a1a !important; }
-        
         .status-badge { font-size: 10px; padding: 2px 10px; border-radius: 20px; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; display: flex; align-items: center; gap: 5px; font-weight: 800; }
         .small-detail { font-size: 10px; color: #9ca3af; font-weight: 600; }
+        
+        /* Modal 滾動條美化 */
+        .modal-scroll::-webkit-scrollbar { width: 4px; }
+        .modal-scroll::-webkit-scrollbar-thumb { background: #059669; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -35,15 +36,15 @@
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-black italic tracking-tighter"><i class="fas fa-bolt mr-1 text-yellow-400"></i>數神</h1>
             <div class="flex flex-col items-end">
-                <div v-if="roomId" class="status-badge">
+                <div v-if="roomId" class="status-badge" @click="manualSync">
                     <i class="fas fa-sync-alt" :class="{'animate-spin': isSyncing}"></i>
                     <span>房間: {{ roomId }}</span>
                 </div>
-                <button v-else @click="showSyncModal = true" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-xl font-black">同步房間</button>
+                <button v-else @click="showSyncModal = true" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-xl font-black uppercase tracking-wider">同步模式</button>
             </div>
         </div>
         <div class="flex gap-2">
-            <input v-model="eventName" @change="saveData" type="text" placeholder="活動名稱..." class="bg-black/20 border border-white/10 text-white flex-1 p-3.5 rounded-2xl text-xs outline-none font-bold">
+            <input v-model="eventName" @change="saveData" type="text" placeholder="輸入活動名稱..." class="bg-black/20 border border-white/10 text-white flex-1 p-3.5 rounded-2xl text-xs outline-none font-bold">
             <div class="relative">
                 <button class="h-full bg-white/10 px-4 rounded-2xl border border-white/20 flex items-center justify-center text-white"><i class="fas fa-calendar-day"></i></button>
                 <input type="date" @change="appendDate" class="absolute inset-0 opacity-0 z-10 cursor-pointer">
@@ -59,7 +60,7 @@
             </div>
             <div class="flex flex-wrap gap-2 mt-4">
                 <span v-for="(u, i) in users" :key="u" class="bg-emerald-500/10 text-emerald-500 px-4 py-2.5 rounded-xl text-[11px] border border-emerald-500/20 flex items-center gap-2 font-black">
-                    {{ u }} <button @click="removeUser(i)" class="text-emerald-500/40">&times;</button>
+                    {{ u }} <button @click="removeUser(i)" class="text-emerald-500/40 hover:text-red-500">&times;</button>
                 </span>
             </div>
         </section>
@@ -78,9 +79,6 @@
                     </select>
                     <div class="flex-1">
                         <input v-model.number="form.amount" @input="errors.amount = false" :class="{'input-error': errors.amount}" type="number" inputmode="decimal" placeholder="金額" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
-                        <div v-if="form.currency !== 'HKD'" class="small-detail text-right text-emerald-500 mt-1">
-                            1 {{ form.currency }} = {{ currentRate.toFixed(4) }} HKD
-                        </div>
                     </div>
                 </div>
 
@@ -115,87 +113,103 @@
                     <div class="font-black text-sm text-gray-100 truncate">{{ exp.item }}</div>
                     <div class="text-[10px] text-gray-500">HKD ${{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付款)</div>
                 </div>
-                <button @click.stop="removeExpense(idx)" class="text-red-500/30 p-2"><i class="fas fa-trash-alt"></i></button>
+                <button @click.stop="removeExpense(idx)" class="text-red-500/30 p-2 hover:text-red-500"><i class="fas fa-trash-alt"></i></button>
             </div>
             
             <div class="grid grid-cols-2 gap-4 mt-8">
-                 <button @click="showShareModal = true" :disabled="expenses.length === 0" class="bg-emerald-900/40 border border-emerald-500/20 py-4.5 rounded-2xl text-xs font-black text-emerald-400 active:scale-95">結算分享</button>
+                 <button @click="showShareModal = true" :disabled="expenses.length === 0" class="bg-emerald-900/40 border border-emerald-500/20 py-4.5 rounded-2xl text-xs font-black text-emerald-400 active:scale-95 disabled:opacity-20 transition-all"><i class="fas fa-file-invoice-dollar mr-2"></i>結算分享</button>
                  <button @click="resetLocal" class="bg-gray-800 border border-white/5 py-4.5 rounded-2xl text-xs font-black text-gray-400 active:scale-95">清空本地</button>
             </div>
         </section>
     </div>
 
-    <div v-if="showShareModal" class="fixed inset-0 bg-black/98 z-50 flex flex-col p-4 overflow-y-auto" @click.self="showShareModal = false">
+    <div v-if="showShareModal" class="fixed inset-0 bg-black/98 z-[999] flex flex-col p-4 overflow-y-auto modal-scroll" @click.self="showShareModal = false">
         <div class="w-full max-w-md mx-auto mt-4 mb-20">
-            <div class="bg-white/5 p-4 rounded-2xl mb-4 flex gap-6 items-center justify-center border border-white/10">
-                <label class="flex items-center gap-2 text-[11px] font-black cursor-pointer text-emerald-400">
-                    <input type="checkbox" v-model="shareOptions.showList" class="accent-emerald-500 w-4 h-4"> 包含消費紀錄
+            
+            <div class="bg-emerald-900/20 p-4 rounded-2xl mb-4 flex gap-4 items-center justify-center border border-emerald-500/30">
+                <label class="flex items-center gap-2 text-[13px] font-black cursor-pointer text-emerald-400">
+                    <input type="checkbox" v-model="shareOptions.showList" class="w-5 h-5 accent-emerald-500"> 包含明細
                 </label>
-                <label class="flex items-center gap-2 text-[11px] font-black cursor-pointer text-emerald-400">
-                    <input type="checkbox" v-model="shareOptions.showNote" class="accent-emerald-500 w-4 h-4"> 顯示轉帳提醒
+                <label class="flex items-center gap-2 text-[13px] font-black cursor-pointer text-emerald-400">
+                    <input type="checkbox" v-model="shareOptions.showNote" class="w-5 h-5 accent-emerald-500"> 顯示附註
                 </label>
             </div>
 
-            <div id="capture-zone" class="bg-[#121212] p-8 rounded-[2.5rem] border border-gray-800 mb-6 shadow-2xl relative">
-                <div class="flex justify-between items-start mb-8 pb-6 border-b border-white/5">
+            <div id="capture-zone" class="bg-[#121212] p-8 rounded-[2.5rem] border border-gray-800 mb-6 shadow-2xl relative overflow-hidden">
+                <div class="flex justify-between items-start mb-8 pb-6 border-b border-white/10">
                     <div>
-                        <h2 class="font-black text-emerald-500 text-2xl tracking-tighter">{{ eventName || '活動結算' }}</h2>
-                        <p class="small-detail mt-1 uppercase">{{ new Date().toLocaleDateString() }}</p>
+                        <h2 class="font-black text-emerald-500 text-2xl tracking-tighter">{{ eventName || '數神結算' }}</h2>
+                        <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">{{ new Date().toLocaleDateString() }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="small-detail">總計 (HKD)</div>
-                        <div class="font-mono font-black text-emerald-400 text-xl">${{ totalSpent.toFixed(1) }}</div>
+                        <div class="text-[10px] text-gray-500 font-black uppercase">總支出</div>
+                        <div class="font-mono font-black text-emerald-400 text-xl">HKD ${{ totalSpent.toFixed(1) }}</div>
                     </div>
                 </div>
 
                 <div class="space-y-4 mb-8">
-                    <div v-for="(s, i) in settlements" :key="i" class="bg-white/[0.03] flex items-center justify-between p-5 rounded-2xl border border-white/5">
+                    <div v-for="(s, i) in settlements" :key="i" class="bg-white/[0.03] flex items-center justify-between p-5 rounded-2xl border border-white/5 shadow-inner">
                         <div class="flex items-center gap-3 font-black text-[13px]">
                             <span class="text-rose-400">{{ s.from }}</span>
-                            <i class="fas fa-arrow-right text-gray-700"></i>
+                            <i class="fas fa-arrow-right text-gray-700 text-[10px]"></i>
                             <span class="text-emerald-500">{{ s.to }}</span>
                         </div>
                         <span class="font-mono text-xl text-emerald-400 font-black italic">HKD ${{ s.amount.toFixed(1) }}</span>
                     </div>
                 </div>
 
-                <div v-if="shareOptions.showList" class="mt-8 pt-6 border-t border-white/5 space-y-2">
-                    <h3 class="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-3">📋 消費紀錄附註</h3>
-                    <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-[10px] pb-1 border-b border-white/5">
-                        <span class="text-gray-300 font-bold">{{ exp.item }} <span class="text-gray-600 font-normal">({{ exp.payer }}付)</span></span>
-                        <span class="font-mono text-emerald-500 font-black">${{ exp.hkd.toFixed(1) }}</span>
+                <div v-if="shareOptions.showList" class="mt-8 pt-6 border-t border-white/10 space-y-3">
+                    <h3 class="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-2 flex items-center gap-2 italic">
+                        <i class="fas fa-receipt text-emerald-500"></i> 消費紀錄附註
+                    </h3>
+                    <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-[11px] pb-2 border-b border-white/5 last:border-0">
+                        <div class="flex-1">
+                            <span class="text-gray-200 font-bold">{{ exp.item }}</span>
+                            <span class="text-gray-600 text-[9px] ml-2">({{ exp.payer }}付)</span>
+                        </div>
+                        <span class="font-mono text-emerald-500 font-black ml-4">${{ exp.hkd.toFixed(1) }}</span>
                     </div>
                 </div>
 
-                <div v-if="shareOptions.showNote" class="mt-8 p-4 bg-emerald-500/5 rounded-xl border border-emerald-500/10 text-center">
-                    <p class="text-[11px] text-emerald-200/70 italic font-black">「大家對對佢，冇問題就跟下面轉帳啦！」</p>
+                <div v-if="shareOptions.showNote" class="mt-8 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 text-center shadow-inner">
+                    <p class="text-[12px] text-emerald-200/80 italic font-black">
+                        「大家對對佢，冇問題就跟上面轉帳啦！」
+                    </p>
                 </div>
 
-                <div class="mt-10 pt-6 text-center opacity-10"><span class="text-[8px] font-black tracking-[0.4em] uppercase">Powered by 数神 MathGod</span></div>
+                <div class="mt-10 pt-6 text-center opacity-10">
+                    <span class="text-[8px] font-black tracking-[0.4em] uppercase text-gray-500">Powered by MathGod 數神</span>
+                </div>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
-                <button @click="copyText" class="bg-gray-800 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">複製詳盡文字</button>
-                <button @click="generateImage" class="bg-emerald-600 py-5 rounded-2xl text-xs font-black text-white active:scale-95 shadow-lg">下載高清圖片</button>
+                <button @click="copyText" class="bg-gray-800 py-5 rounded-2xl text-xs font-black text-white shadow-xl active:scale-95 transition-all">複製詳細文字</button>
+                <button @click="generateImage" class="bg-emerald-600 py-5 rounded-2xl text-xs font-black text-white shadow-xl active:scale-95 transition-all">下載結算圖片</button>
             </div>
+            
+            <button @click="showShareModal = false" class="w-full mt-6 text-gray-600 font-black text-xs p-4 uppercase tracking-tighter hover:text-emerald-500">返回記帳頁</button>
         </div>
     </div>
 
-    <div v-if="showSyncModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-8" @click.self="showSyncModal = false">
+    <div v-if="showSyncModal" class="fixed inset-0 bg-black/95 z-[1000] flex items-center justify-center p-8" @click.self="showSyncModal = false">
         <div class="card-bg w-full max-w-sm rounded-[3rem] p-8 border border-white/10 shadow-2xl text-center">
-            <h3 class="font-black text-emerald-500 mb-6">同步/開房</h3>
+            <h3 class="font-black text-emerald-500 mb-6 tracking-widest uppercase">Room Sync</h3>
             <input type="number" v-model="roomInput" class="input-bg w-full text-center text-5xl font-mono py-4 rounded-2xl mb-6 outline-none border-emerald-500/30 border-2" placeholder="0000">
             <div class="grid grid-cols-2 gap-4">
-                <button @click="joinRoom" class="bg-emerald-600 py-4 rounded-2xl font-black text-sm">加入</button>
-                <button @click="createRoom" class="bg-gray-700 py-4 rounded-2xl font-black text-sm">新開</button>
+                <button @click="joinRoom" class="bg-emerald-600 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all">加入</button>
+                <button @click="createRoom" class="bg-gray-700 py-4 rounded-2xl font-black text-sm active:scale-95 transition-all">新開</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Firebase 初始化
-const firebaseConfig = { apiKey: "yFDRUSUFAFnZf6AGdsEA9LxSyLcZF75oIFfib5At", databaseURL: "https://mathgod2-default-rtdb.asia-southeast1.firebasedatabase.app/", projectId: "mathgod2" };
+// Firebase 配置
+const firebaseConfig = { 
+    apiKey: "yFDRUSUFAFnZf6AGdsEA9LxSyLcZF75oIFfib5At", 
+    databaseURL: "https://mathgod2-default-rtdb.asia-southeast1.firebasedatabase.app/", 
+    projectId: "mathgod2" 
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -209,7 +223,7 @@ createApp({
         const errors = ref({ item: false, amount: false, payer: false, involved: false });
         const roomId = ref(null); const roomInput = ref(""); const isSyncing = ref(false);
         const showSyncModal = ref(false); const showShareModal = ref(false);
-        const currentRate = ref(1); const rateTime = ref("即時");
+        const currentRate = ref(1); 
         const shareOptions = ref({ showList: true, showNote: true });
 
         const saveData = () => {
@@ -218,7 +232,7 @@ createApp({
             localStorage.setItem('mathGod_local', JSON.stringify(data));
         };
 
-        const resetLocal = () => { if(confirm("確定清除本地資料？")) { localStorage.clear(); window.location.reload(); } };
+        const resetLocal = () => { if(confirm("確定清空本地紀錄？(房間雲端資料不會受影響)")) { localStorage.clear(); window.location.reload(); } };
 
         const addExpense = () => {
             errors.value.item = !form.value.item; 
@@ -227,7 +241,16 @@ createApp({
             errors.value.involved = form.value.involved.length === 0;
             if(Object.values(errors.value).some(v => v)) return;
 
-            const exp = { id: isEditing.value ? editingId.value : Date.now(), item: form.value.item, hkd: form.value.amount * currentRate.value, payer: form.value.payer, involved: [...form.value.involved], origAmount: form.value.amount, origCurrency: form.value.currency };
+            const exp = { 
+                id: isEditing.value ? editingId.value : Date.now(), 
+                item: form.value.item, 
+                hkd: form.value.amount * currentRate.value, 
+                payer: form.value.payer, 
+                involved: [...form.value.involved], 
+                origAmount: form.value.amount, 
+                origCurrency: form.value.currency 
+            };
+
             if(isEditing.value) { const idx = expenses.value.findIndex(e => e.id === editingId.value); expenses.value[idx] = exp; }
             else { expenses.value.unshift(exp); }
             isEditing.value = false; editingId.value = null; form.value.item = ""; form.value.amount = null; saveData();
@@ -241,7 +264,8 @@ createApp({
         const settlements = computed(() => {
             let bals = {}; users.value.forEach(u => bals[u] = 0);
             expenses.value.forEach(e => {
-                bals[e.payer] += e.hkd; const split = e.hkd / (e.involved.length || 1);
+                bals[e.payer] += e.hkd; 
+                const split = e.hkd / (e.involved.length || 1);
                 e.involved.forEach(u => { if(bals[u] !== undefined) bals[u] -= split; });
             });
             let d = [], c = [], res = [];
@@ -264,35 +288,51 @@ createApp({
             const rid = roomInput.value; if(!rid) return; isSyncing.value = true;
             const snap = await db.ref('rooms/' + rid).get();
             if(snap.exists()) {
-                roomId.value = rid; db.ref('rooms/' + rid).on('value', s => { const v = s.val(); if(v) { users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; } });
+                roomId.value = rid; 
+                db.ref('rooms/' + rid).on('value', s => { 
+                    const v = s.val(); 
+                    if(v) { users.value = v.users||[]; expenses.value = v.expenses||[]; eventName.value = v.eventName||""; } 
+                });
                 showSyncModal.value = false;
-            } isSyncing.value = false;
+            } else { alert("找不到此房間碼"); }
+            isSyncing.value = false;
         };
 
         return {
-            eventName, users, expenses, newUser, form, isEditing, errors, showSyncModal, showShareModal, shareOptions, totalSpent: computed(() => expenses.value.reduce((s, e) => s + (e.hkd || 0), 0)), settlements, roomId, roomInput, isSyncing, currentRate, rateTime, resetLocal, addExpense, handleCurrencyChange, saveData, joinRoom,
+            eventName, users, expenses, newUser, form, isEditing, errors, showSyncModal, showShareModal, shareOptions, totalSpent: computed(() => expenses.value.reduce((s, e) => s + (e.hkd || 0), 0)), settlements, roomId, roomInput, isSyncing, currentRate, resetLocal, addExpense, handleCurrencyChange, saveData, joinRoom,
             addUser: () => { const n = newUser.value.trim(); if(!n || users.value.includes(n)) return; users.value.push(n); form.value.involved.push(n); newUser.value = ""; saveData(); },
             removeUser: (i) => { users.value.splice(i,1); saveData(); },
             removeExpense: (i) => { expenses.value.splice(i,1); saveData(); },
             editExpense: (i) => {
-                const e = expenses.value[i]; editingId.value = e.id; form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency || 'HKD', payer: e.payer, involved: [...e.involved] };
-                isEditing.value = true; handleCurrencyChange(); Object.keys(errors.value).forEach(k => errors.value[k] = false);
+                const e = expenses.value[i]; editingId.value = e.id; 
+                form.value = { item: e.item, amount: e.origAmount, currency: e.origCurrency || 'HKD', payer: e.payer, involved: [...e.involved] };
+                isEditing.value = true; handleCurrencyChange(); 
+                Object.keys(errors.value).forEach(k => errors.value[k] = false);
             },
             toggleSelectAll: () => { form.value.involved = (form.value.involved.length === users.value.length) ? [] : [...users.value]; errors.value.involved = false; },
             appendDate: (e) => { eventName.value += " (" + e.target.value + ")"; saveData(); },
             createRoom: () => { roomId.value = Math.floor(1000 + Math.random() * 9000).toString(); saveData(); showSyncModal.value = false; },
+            manualSync: () => { isSyncing.value = true; setTimeout(() => isSyncing.value = false, 800); },
             copyText: () => {
-                let msg = `【${eventName.value || '數神結算'}】\n💰 總額: HKD $${expenses.value.reduce((s,e)=>s+e.hkd,0).toFixed(1)}\n\n`;
+                let msg = `【${eventName.value || '數神結算'}】\n💰 總計: HKD $${expenses.value.reduce((s,e)=>s+e.hkd,0).toFixed(1)}\n\n`;
                 msg += `💸 轉帳指引：\n`;
                 settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: HKD $${s.amount.toFixed(1)}\n`);
                 if(shareOptions.value.showList) {
-                    msg += `\n📋 消費紀錄附註：\n`;
+                    msg += `\n📋 消費紀錄明細：\n`;
                     expenses.value.forEach(e => msg += `- ${e.item}: HKD $${e.hkd.toFixed(1)} (${e.payer}付)\n`);
                 }
                 if(shareOptions.value.showNote) msg += `\n💡 大家對對佢，冇問題就跟上面轉帳啦！`;
-                navigator.clipboard.writeText(msg); alert("詳盡文字已複製！");
+                navigator.clipboard.writeText(msg); alert("詳盡文字已複製，去貼俾朋友啦！");
             },
-            generateImage: async () => { const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 }); const link = document.createElement('a'); link.download = '結算.png'; link.href = canvas.toDataURL(); link.click(); }
+            generateImage: async () => { 
+                const canvas = await html2canvas(document.getElementById('capture-zone'), { 
+                    backgroundColor: '#121212', 
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                }); 
+                const link = document.createElement('a'); link.download = '數神結算.png'; link.href = canvas.toDataURL('image/png'); link.click(); 
+            }
         }
     }
 }).mount('#app');
