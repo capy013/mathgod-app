@@ -65,7 +65,7 @@
             </div>
         </section>
 
-        <section class="card-bg rounded-3xl p-6 border border-white/5 mt-6">
+        <section class="card-bg rounded-3xl p-6 border border-white/5">
             <div class="space-y-5">
                 <input v-model="form.item" type="text" placeholder="項目 (例如: 午飯)" class="input-bg w-full p-4 rounded-2xl text-sm outline-none">
                 
@@ -80,66 +80,52 @@
                     </select>
                     <input v-model.number="form.amount" type="number" placeholder="金額" class="input-bg flex-1 p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
                 </div>
-                
-                <div v-if="form.currency === 'CUSTOM'" class="mt-2">
-                    <input v-model="customCurrencyName" type="text" placeholder="輸入外幣名稱 (如: EUR)" class="input-bg w-full p-3 rounded-xl text-xs font-bold outline-none text-emerald-400">
-                </div>
 
                 <div v-if="form.currency !== 'HKD'" class="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">匯率 (1 HKD =)</span>
-                        <label v-if="form.currency !== 'CUSTOM'" class="flex items-center gap-1.5 cursor-pointer">
-                            <input type="checkbox" v-model="isManualRate" class="w-3.5 h-3.5 accent-emerald-500 rounded">
-                            <span class="text-[10px] font-bold text-emerald-500 uppercase">自訂</span>
+                    <div class="flex justify-between items-center text-[10px] font-bold text-gray-500">
+                        <span>匯率 (1 HKD =)</span>
+                        <label class="flex items-center gap-1 cursor-pointer text-emerald-500">
+                            <input type="checkbox" v-model="isManualRate" class="accent-emerald-500"> 自訂
                         </label>
                     </div>
-                    <input v-model.number="manualShopRate" @input="updateFromShopRate" :disabled="!isManualRate" type="number" step="0.001" class="input-bg w-full p-3 rounded-xl text-sm font-mono outline-none text-emerald-400 disabled:opacity-50">
+                    <input v-model.number="manualShopRate" @input="updateFromShopRate" :disabled="!isManualRate" type="number" step="0.001" class="input-bg w-full p-3 rounded-xl text-sm font-mono text-emerald-400 disabled:opacity-50">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-bold text-gray-500 ml-1">誰付款？</label>
+                        <label class="text-[10px] font-bold text-gray-500">誰付款？</label>
                         <select v-model="form.payer" class="input-bg w-full p-3 rounded-2xl text-sm outline-none">
                             <option v-for="u in users" :key="u" :value="u">{{ u }}</option>
                         </select>
                     </div>
                     <div class="space-y-2">
-                        <div class="flex justify-between items-center ml-1">
-                            <label class="text-[10px] font-bold text-gray-500">誰參與？</label> 
-                            <button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-bold uppercase">全選</button>
-                        </div>
-                        <div class="input-bg max-h-48 overflow-y-auto rounded-2xl p-3 text-[10px]">
-                            <div v-for="u in users" :key="u" class="mb-3">
+                        <div class="flex justify-between items-center"><label class="text-[10px] font-bold text-gray-500">誰參與？</label><button @click="toggleSelectAll" class="text-[10px] text-emerald-500 font-bold">全選</button></div>
+                        <div class="input-bg max-h-40 overflow-y-auto rounded-2xl p-3 text-[10px]">
+                            <div v-for="u in users" :key="u" class="mb-2">
                                 <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 flex-1">
-                                        <input type="checkbox" :value="u" v-model="form.involved" class="w-4 h-4 rounded accent-emerald-500">
-                                        <span class="font-bold truncate">{{ u }}</span>
-                                    </div>
+                                    <div class="flex items-center gap-2"><input type="checkbox" :value="u" v-model="form.involved" class="accent-emerald-500"><span>{{ u }}</span></div>
                                     <button @click="togglePortion(u)" class="text-gray-500"><i class="fas fa-sliders-h"></i></button>
                                 </div>
-                                <div v-if="showPortionInput[u]" class="pl-6 mt-1 flex items-center gap-2">
-                                    <span class="text-[9px] text-gray-500">份數:</span>
-                                    <input type="number" v-model.number="form.portions[u]" class="portion-input">
-                                </div>
+                                <input v-if="showPortionInput[u]" type="number" v-model.number="form.portions[u]" class="portion-input mt-1">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button @click="addExpense" class="evergreen-gradient w-full text-white font-black py-5 rounded-[20px] shadow-xl text-sm tracking-widest active:scale-95 transition-all">
-                    確認記帳 <span v-if="form.amount" class="ml-1 opacity-70 text-xs font-mono">(HK${{ (form.amount * currentRate).toFixed(1) }})</span>
+                <button @click="addExpense" class="evergreen-gradient w-full text-white font-black py-4 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
+                    確認記帳 <span v-if="form.amount" class="opacity-70 text-xs">(${{ (form.amount * currentRate).toFixed(1) }} HKD)</span>
                 </button>
             </div>
         </section>
 
         <section v-if="expenses.length > 0" class="space-y-3">
-            <h3 class="text-[10px] font-bold text-gray-500 uppercase ml-2 tracking-widest">最近紀錄</h3>
+            <h3 class="text-[10px] font-bold text-gray-500 uppercase ml-2">最近紀錄</h3>
             <div v-for="(exp, idx) in expenses" :key="exp.id" class="card-bg p-4 rounded-2xl flex justify-between items-center border-l-4 border-emerald-600">
-                <div class="flex-1 min-w-0 mr-4">
-                    <div class="font-black text-sm text-gray-200 truncate">{{ exp.item }}</div>
+                <div class="flex-1">
+                    <div class="font-bold text-sm text-gray-200">{{ exp.item }}</div>
                     <div class="text-[10px] text-gray-500">HKD {{ exp.hkd.toFixed(1) }} ({{ exp.payer }} 付)</div>
                 </div>
-                <button @click="removeExpense(idx)" class="text-red-500/50 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                <button @click="removeExpense(idx)" class="text-red-500/50"><i class="fas fa-trash"></i></button>
             </div>
         </section>
 
@@ -154,69 +140,69 @@
     </div>
 
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6" @click.self="showSyncModal = false">
-        <div class="card-bg w-full max-w-sm rounded-[32px] p-6 border border-white/20">
-            <h3 class="text-xl font-bold text-emerald-500 mb-2">🌐 雲端同步</h3>
-            <p class="text-xs text-gray-400 mb-4">輸入 6 位房間號，大家即可一齊記帳。</p>
-            <input type="tel" v-model="roomInput" class="input-bg w-full text-center text-2xl tracking-[0.5em] mb-4 font-mono py-3 rounded-xl" placeholder="888888" maxlength="6">
-            <button @click="joinRoom" class="bg-emerald-600 w-full py-3 rounded-xl font-bold mb-2">進入房間</button>
-            <button @click="showSyncModal = false" class="text-gray-500 text-xs w-full">取消</button>
+        <div class="card-bg w-full max-w-sm rounded-3xl p-6">
+            <h3 class="text-emerald-500 font-bold mb-4">🌐 進入房間</h3>
+            <input type="tel" v-model="roomInput" class="input-bg w-full text-center text-2xl font-mono py-3 rounded-xl mb-4" placeholder="888888" maxlength="6">
+            <button @click="joinRoom" class="bg-emerald-600 w-full py-3 rounded-xl font-bold">開始同步</button>
         </div>
     </div>
 
     <div v-if="showShareModal" class="fixed inset-0 bg-black/95 z-50 flex flex-col p-4 overflow-y-auto" @click.self="showShareModal = false">
-        <div class="w-full max-w-md mx-auto mt-10">
-            <div id="capture-zone" class="bg-[#121212] p-6 rounded-[24px] border border-gray-800 mb-4">
+        <div class="w-full max-w-md mx-auto mt-6">
+            <div id="capture-zone" class="bg-[#121212] p-6 rounded-3xl border border-gray-800 mb-6">
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <h2 class="font-black text-emerald-500 text-xl tracking-tight">{{ eventName || '埋單計數' }}</h2>
-                        <p class="text-[10px] text-gray-500">MathGod Settlement</p>
+                        <h2 class="font-black text-emerald-500 text-xl">{{ eventName || '數神結算單' }}</h2>
+                        <p class="text-[10px] text-gray-500">MathGod Summary</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-[10px] text-gray-500 uppercase font-bold">總消費</div>
-                        <div class="font-mono font-bold text-emerald-500 text-lg">HK${{ totalSpent.toFixed(1) }}</div>
+                        <div class="text-[10px] text-gray-500 font-bold">總金額 (HKD)</div>
+                        <div class="font-mono font-bold text-emerald-500 text-lg">${{ totalSpent.toFixed(1) }}</div>
                     </div>
                 </div>
                 
                 <div class="space-y-3 mb-6">
-                    <div v-for="(s, i) in settlements" :key="i" class="bg-gray-900 border border-white/5 flex items-center justify-between p-4 rounded-2xl">
+                    <div v-for="(s, i) in settlements" :key="i" class="bg-white/5 border border-white/5 flex items-center justify-between p-4 rounded-2xl">
                         <div class="flex items-center gap-2">
                             <span class="text-rose-400 font-black text-sm">{{ s.from }}</span>
                             <i class="fas fa-arrow-right text-[10px] text-gray-700"></i>
                             <span class="text-emerald-500 font-black text-sm">{{ s.to }}</span>
                         </div>
-                        <span class="font-mono text-xl text-emerald-500 font-black italic">${{ s.amount.toFixed(1) }}</span>
+                        <span class="font-mono text-xl text-emerald-400 font-black italic">${{ s.amount.toFixed(1) }}</span>
                     </div>
-                    <div v-if="settlements.length === 0" class="text-center text-gray-600 text-xs py-2">無數要找</div>
+                    <div v-if="settlements.length === 0" class="text-center text-gray-600 text-xs py-2">無須找數</div>
                 </div>
 
-                <div v-if="showDetails" class="border-t border-white/10 pt-4 mt-4">
-                    <div class="space-y-2">
-                         <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-xs text-gray-400">
-                             <span>{{ exp.item }} ({{ exp.payer }})</span>
-                             <span>${{ exp.hkd.toFixed(1) }}</span>
-                         </div>
+                <div v-if="showDetails" class="border-t border-white/10 pt-4 space-y-2">
+                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-wider">消費詳情</p>
+                    <div v-for="exp in expenses" :key="exp.id" class="flex justify-between text-[11px] text-gray-400">
+                        <span>{{ exp.item }} ({{ exp.payer }} 付)</span>
+                        <span>${{ exp.hkd.toFixed(1) }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <button @click="copyText" class="bg-gray-800 py-3 rounded-xl text-xs font-bold text-white border border-gray-700">複製文字</button>
-                <button @click="generateImage" class="bg-emerald-600 py-3 rounded-xl text-xs font-bold text-white">下載圖片</button>
+            <div class="space-y-3">
+                <div class="flex justify-center items-center gap-2 mb-2">
+                    <input type="checkbox" v-model="showDetails" id="incDetails" class="accent-emerald-500 w-4 h-4">
+                    <label for="incDetails" class="text-sm text-gray-300">包含消費詳情</label>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-copy"></i> 複製結算文字
+                    </button>
+                    <button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-image"></i> 下載結算圖片
+                    </button>
+                </div>
+                <button @click="showShareModal = false" class="w-full py-4 text-gray-500 text-xs font-bold">返回</button>
             </div>
-            
-            <div class="flex justify-center items-center gap-2 mb-4">
-                <input type="checkbox" v-model="showDetails" id="showDet" class="accent-emerald-500">
-                <label for="showDet" class="text-xs text-gray-400">圖片包含詳情</label>
-            </div>
-
-            <button @click="showShareModal = false" class="w-full py-4 text-gray-500 text-xs font-bold">關閉</button>
         </div>
     </div>
 
 </div>
 
 <script>
-// Firebase 配置
 const firebaseConfig = {
     apiKey: "yFDRUSUFAFnZf6AGdsEA9LxSyLcZF75oIFfib5At", 
     authDomain: "mathgod2.firebaseapp.com",
@@ -227,17 +213,13 @@ const firebaseConfig = {
     appId: "1:1056582522765:web:03f3938031d2003c40156d"
 };
 
-let db = null;
-try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-} catch (e) { console.warn("Firebase Init Failed"); }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-const { createApp, ref, computed, watch, onMounted } = Vue;
+const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        // State
         const eventName = ref("");
         const users = ref([]);
         const expenses = ref([]);
@@ -250,87 +232,64 @@ createApp({
         const showSyncModal = ref(false);
         const showShareModal = ref(false);
         const showDetails = ref(false);
-        const roomInput = ref("");
         const roomId = ref(null);
-        const customCurrencyName = ref("");
-        const isRateCached = ref(false);
+        const roomInput = ref("");
 
         const isOnline = computed(() => !!roomId.value);
         const totalSpent = computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0));
 
-        // Methods
         const saveData = () => {
             const data = { users: users.value, expenses: expenses.value, eventName: eventName.value };
             localStorage.setItem('mathGodV4', JSON.stringify(data));
-            if (isOnline.value && db) {
+            if (isOnline.value) {
                 db.ref('rooms/' + roomId.value).set({ ...data, lastUpdate: Date.now() });
             }
         };
 
         const addUser = () => {
-            const val = newUser.value.trim();
-            if (val && !users.value.includes(val)) {
-                users.value.push(val);
-                form.value.involved.push(val);
-                form.value.portions[val] = 1;
-                if (!form.value.payer) form.value.payer = val;
+            if (newUser.value && !users.value.includes(newUser.value)) {
+                users.value.push(newUser.value);
+                form.value.involved.push(newUser.value);
+                form.value.portions[newUser.value] = 1;
+                if (!form.value.payer) form.value.payer = newUser.value;
                 newUser.value = "";
                 saveData();
             }
         };
 
-        const removeUser = (i) => {
-            if(confirm("確定刪除？")) { users.value.splice(i, 1); saveData(); }
-        };
-
         const addExpense = () => {
-            if (!form.value.item || !form.value.amount || !form.value.payer) {
-                alert("請填寫完整項目、金額及付款人");
-                return;
-            }
-            const currentPortions = {};
-            form.value.involved.forEach(u => currentPortions[u] = form.value.portions[u] || 1);
-            
+            if (!form.value.item || !form.value.amount || !form.value.payer) return;
+            const pts = {};
+            form.value.involved.forEach(u => pts[u] = form.value.portions[u] || 1);
             expenses.value.unshift({
                 id: Date.now(),
                 item: form.value.item,
-                amount: form.value.amount,
                 hkd: form.value.amount * currentRate.value,
                 payer: form.value.payer,
                 involved: [...form.value.involved],
-                portions: currentPortions
+                portions: pts
             });
-            form.value.item = "";
-            form.value.amount = "";
+            form.value.item = ""; form.value.amount = "";
             saveData();
         };
 
-        const removeExpense = (i) => {
-            if(confirm("刪除此紀錄？")) { expenses.value.splice(i, 1); saveData(); }
-        };
-
         const settlements = computed(() => {
-            let balances = {}; 
-            users.value.forEach(u => balances[u] = 0);
-            
+            let balances = {}; users.value.forEach(u => balances[u] = 0);
             expenses.value.forEach(exp => {
                 balances[exp.payer] += exp.hkd;
-                let totalPortions = 0;
-                exp.involved.forEach(u => totalPortions += (exp.portions[u] || 1));
-                if (totalPortions > 0) {
-                    exp.involved.forEach(u => {
-                        balances[u] -= exp.hkd * ((exp.portions[u] || 1) / totalPortions);
-                    });
+                let totalPts = 0;
+                exp.involved.forEach(u => totalPts += (exp.portions[u] || 1));
+                if (totalPts > 0) {
+                    exp.involved.forEach(u => balances[u] -= exp.hkd * ((exp.portions[u] || 1) / totalPts));
                 }
             });
-            
             let d = [], c = [], res = [];
             for (let u in balances) {
                 if (balances[u] < -0.01) d.push({n: u, a: Math.abs(balances[u])});
                 if (balances[u] > 0.01) c.push({n: u, a: balances[u]});
             }
-            let i = 0, j = 0;
-            while(i < d.length && j < c.length) {
+            let i=0, j=0;
+            while(i<d.length && j<c.length){
                 let m = Math.min(d[i].a, c[j].a);
                 res.push({from: d[i].n, to: c[j].n, amount: m});
                 d[i].a -= m; c[j].a -= m;
@@ -340,53 +299,45 @@ createApp({
         });
 
         const handleCurrencyChange = async () => {
-            if (form.value.currency === 'HKD') {
-                currentRate.value = 1;
-                isManualRate.value = false;
-                return;
-            }
-            if (form.value.currency === 'CUSTOM') {
-                isManualRate.value = true;
-                return;
-            }
+            if (form.value.currency === 'HKD') { currentRate.value = 1; return; }
             try {
                 const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`);
                 const data = await res.json();
-                const rate = data.rates.HKD || 1;
-                currentRate.value = rate;
-                manualShopRate.value = Number((1/rate).toFixed(4));
-            } catch (e) { alert("無法取得即時匯率"); }
+                currentRate.value = data.rates.HKD || 1;
+                manualShopRate.value = Number((1/currentRate.value).toFixed(4));
+            } catch (e) { alert("匯率獲取失敗"); }
         };
 
         const copyText = () => {
-            let msg = `【⚡️數神結算】${eventName.value || '清數'}\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
+            let msg = `【⚡️數神結算】${eventName.value}\n總額: $${totalSpent.value.toFixed(1)} HKD\n\n`;
             settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
-            navigator.clipboard.writeText(msg).then(() => alert("已複製文字內容"));
+            if(showDetails.value) {
+                msg += `\n--- 消費詳情 ---\n`;
+                expenses.value.forEach(e => msg += `${e.item}: $${e.hkd.toFixed(1)}\n`);
+            }
+            navigator.clipboard.writeText(msg).then(() => alert("文字已複製！"));
         };
 
         const generateImage = async () => {
-            const el = document.getElementById('capture-zone');
-            const canvas = await html2canvas(el, { backgroundColor: '#121212', scale: 2 });
+            const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 });
             const link = document.createElement('a');
-            link.download = `Settlement_${eventName.value || 'MathGod'}.png`;
+            link.download = `數神_${eventName.value || '結算'}.png`;
             link.href = canvas.toDataURL();
             link.click();
         };
 
         const joinRoom = () => {
-            if (roomInput.value.length < 3) return;
+            if(!roomInput.value) return;
             roomId.value = roomInput.value;
             showSyncModal.value = false;
-            if(db) {
-                db.ref('rooms/' + roomId.value).on('value', snap => {
-                    const data = snap.val();
-                    if(data) {
-                        users.value = data.users || [];
-                        expenses.value = data.expenses || [];
-                        eventName.value = data.eventName || "";
-                    }
-                });
-            }
+            db.ref('rooms/' + roomId.value).on('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    users.value = data.users || [];
+                    expenses.value = data.expenses || [];
+                    eventName.value = data.eventName || "";
+                }
+            });
         };
 
         onMounted(() => {
@@ -398,24 +349,22 @@ createApp({
             }
         });
 
-        // Setup Returns (確保 HTML 能調用)
         return {
-            eventName, users, expenses, newUser, form, 
-            showSyncModal, showShareModal, showDetails, showPortionInput,
-            roomId, roomInput, currentRate, manualShopRate, isManualRate,
-            customCurrencyName, isRateCached, isOnline, totalSpent,
-            addUser, removeUser, addExpense, removeExpense, settlements,
-            handleCurrencyChange, joinRoom, openSyncModal: () => showSyncModal.value = true,
-            openShareModal: () => showShareModal.value = true,
-            copyText, generateImage, appendDate: (e) => { eventName.value += " " + e.target.value.split('-').slice(1).reverse().join('/'); saveData(); },
-            resetAll: () => { if(confirm("確定清除所有資料並登出房間？")) { localStorage.clear(); location.reload(); } },
+            eventName, users, expenses, newUser, form, showSyncModal, showShareModal, showDetails,
+            totalSpent, settlements, isOnline, roomId, roomInput, currentRate, manualShopRate, isManualRate, showPortionInput,
+            addUser, addExpense, openShareModal: () => showShareModal.value = true,
+            openSyncModal: () => showSyncModal.value = true,
+            copyText, generateImage, joinRoom, handleCurrencyChange, saveData,
+            removeUser: (i) => { users.value.splice(i,1); saveData(); },
+            removeExpense: (i) => { expenses.value.splice(i,1); saveData(); },
             toggleSelectAll: () => { form.value.involved = form.value.involved.length === users.value.length ? [] : [...users.value] },
             togglePortion: (u) => showPortionInput.value[u] = !showPortionInput.value[u],
             updateFromShopRate: () => currentRate.value = 1 / manualShopRate.value,
-            saveData
+            appendDate: (e) => { eventName.value += " " + e.target.value; saveData(); },
+            resetAll: () => { if(confirm("確定清除？")) { localStorage.clear(); location.reload(); } }
         };
     }
 }).mount('#app');
 </script>
 </body>
-                                                                         </html>
+    </html>
