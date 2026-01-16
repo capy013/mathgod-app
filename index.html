@@ -15,35 +15,17 @@
     <style>
         [v-cloak] { display: none; }
         html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            overflow-x: hidden;
-            /* 修正 3: 禁止垂直下拉刷新 */
-            overscroll-behavior-y: contain;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; overflow-x: hidden;
+            overscroll-behavior-y: contain; /* 禁止下拉刷新 */
         }
-        body { 
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        #app {
-            width: 100%;
-            max-width: 500px;
-            min-height: 100vh;
-            background-color: #121212;
-            position: relative;
-        }
-
+        body { display: flex; justify-content: center; align-items: flex-start; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #app { width: 100%; max-width: 500px; min-height: 100vh; background-color: #121212; position: relative; }
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
         .update-gradient { background: linear-gradient(135deg, #d97706 0%, #92400e 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
         .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; transition: all 0.2s; }
         .input-error { border: 1px solid #ef4444 !important; box-shadow: 0 0 5px rgba(239, 68, 68, 0.3); }
-        
         .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; display: flex; align-items: center; gap: 4px; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spinning { animation: spin 0.8s linear; }
@@ -55,18 +37,16 @@
     
     <header class="evergreen-gradient text-white p-5 sticky top-0 z-20 shadow-lg rounded-b-3xl">
         <div class="flex justify-between items-center mb-4 h-8">
-            <h1 class="text-2xl font-black italic tracking-tighter">
-                <i class="fas fa-bolt mr-1 text-yellow-400"></i>數神
-            </h1>
-            <div class="flex flex-col items-end">
-                <div v-if="roomId" class="flex flex-col items-end cursor-pointer active:scale-95 transition-all" @click="manualSync">
+            <h1 class="text-2xl font-black italic tracking-tighter"><i class="fas fa-bolt mr-1 text-yellow-400"></i>數神</h1>
+            <div class="flex flex-col items-end cursor-pointer active:scale-95 transition-all" @click="manualSync">
+                <div v-if="roomId" class="flex flex-col items-end">
                     <div class="status-badge">
                         <i class="fas fa-sync-alt" :class="{'spinning': isSyncing}"></i>
                         <span>房間: {{ roomId }}</span>
                     </div>
                     <span class="text-[7px] text-white/40 font-mono mt-0.5">Sync: {{ lastSyncTime }}</span>
                 </div>
-                <button v-else @click="showSyncModal = true" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold">進入同步模式</button>
+                <button v-else @click.stop="showSyncModal = true" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold">進入同步模式</button>
             </div>
         </div>
         <div class="flex gap-2">
@@ -101,12 +81,10 @@
         <section class="card-bg rounded-3xl p-6 border border-white/5" :class="{'border-amber-500/30': isEditing}">
             <div class="space-y-4">
                 <div v-if="isEditing" class="flex justify-between items-center"><span class="text-[10px] bg-amber-600/20 text-amber-500 px-2 py-1 rounded-lg font-bold">正在修改紀錄...</span><button @click="cancelEdit" class="text-[10px] text-gray-400 underline">取消</button></div>
-                
                 <div class="relative">
                     <input v-model="form.item" :class="{'input-error': errors.item}" type="text" placeholder="項目 (例如: 午飯)" class="input-bg w-full p-4 rounded-2xl text-sm outline-none font-bold">
                     <p v-if="errors.item" class="text-red-500 text-[9px] mt-1 ml-2 font-bold">請輸入項目名稱</p>
                 </div>
-                
                 <div class="flex gap-2">
                     <select v-model="form.currency" @change="handleCurrencyChange" class="input-bg p-4 rounded-2xl text-sm w-1/3 font-bold outline-none">
                         <option value="HKD">🇭🇰 HKD</option>
@@ -120,7 +98,6 @@
                         <p v-if="errors.amount" class="text-red-500 text-[9px] mt-1 text-right mr-2 font-bold">請輸入正確金額</p>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-[10px] font-bold text-gray-500 ml-1">誰付款？</label>
@@ -141,7 +118,6 @@
                         <p v-if="errors.involved" class="text-red-500 text-[9px] mt-1 ml-2 font-bold">需至少一人參與</p>
                     </div>
                 </div>
-
                 <button @click="addExpense" :class="isEditing ? 'update-gradient' : 'evergreen-gradient'" class="w-full text-white font-black py-4 rounded-2xl shadow-xl text-sm active:scale-95 transition-all">
                     {{ isEditing ? '確認更新' : '確認記帳' }}
                 </button>
@@ -158,7 +134,7 @@
                 <button @click.stop="removeExpense(idx)" class="text-red-500/50 pl-4"><i class="fas fa-trash"></i></button>
             </div>
             <div class="grid grid-cols-2 gap-3 mt-6">
-                <button @click="showShareModal = true" class="bg-emerald-900/50 border border-emerald-500/30 py-4 rounded-2xl text-xs font-bold text-emerald-400 active:scale-95"><i class="fas fa-share-alt mr-2"></i>結算分享</button>
+                 <button @click="showShareModal = true" class="bg-emerald-900/50 border border-emerald-500/30 py-4 rounded-2xl text-xs font-bold text-emerald-400 active:scale-95"><i class="fas fa-share-alt mr-2"></i>結算分享</button>
                  <button @click="resetAll" class="bg-red-500/10 border border-red-500/20 py-4 rounded-2xl text-xs font-bold text-red-500 active:scale-95"><i class="fas fa-trash-alt mr-2"></i>清除紀錄</button>
             </div>
         </section>
@@ -239,12 +215,11 @@ createApp({
         const isSyncing = ref(false); const showSyncModal = ref(false); const syncTab = ref('join');
         const showShareModal = ref(false); const showDetails = ref(false); const roomId = ref(null);
         const roomInput = ref(""); const generatedRoomId = ref(""); const currentRate = ref(1);
-        const rateTime = ref(""); const validRecentRooms = ref([]);
+        const validRecentRooms = ref([]);
 
         const totalSpent = computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0));
         const daysRemaining = computed(() => Math.max(0, Math.ceil(((lastUpdateTS.value + 2592000000) - Date.now()) / 86400000)));
 
-        // 核心驗證與紅框邏輯
         watch(() => form.value.item, (val) => { if(val) errors.value.item = false; });
         watch(() => form.value.amount, (val) => { if(val > 0) errors.value.amount = false; });
         watch(() => form.value.payer, (val) => { if(val) errors.value.payer = false; });
@@ -265,13 +240,24 @@ createApp({
             db.ref('rooms/' + roomId.value).once('value').then(s => {
                 const v = s.val();
                 if(v) {
-                    users.value = v.users || [];
-                    expenses.value = v.expenses || [];
-                    eventName.value = v.eventName || "";
+                    users.value = v.users || []; expenses.value = v.expenses || []; eventName.value = v.eventName || "";
                     lastSyncTime.value = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
                 }
                 setTimeout(() => { isSyncing.value = false; }, 800);
             });
+        };
+
+        const appendDate = (e) => {
+            const dateStr = e.target.value;
+            if(!dateStr) return;
+            // 修正 2: 使用正則表達式，如果已有 YYYY-MM-DD 就替換，否則追加
+            const dateRegex = /\d{4}-\d{2}-\d{2}/;
+            if (dateRegex.test(eventName.value)) {
+                eventName.value = eventName.value.replace(dateRegex, dateStr);
+            } else {
+                eventName.value = (eventName.value.trim() + " " + dateStr).trim();
+            }
+            saveData();
         };
 
         const joinRoom = async () => {
@@ -322,14 +308,12 @@ createApp({
             errors.value.payer = !form.value.payer;
             errors.value.involved = form.value.involved.length === 0;
             if(errors.value.item || errors.value.amount || errors.value.payer || errors.value.involved) return;
-
             const exp = {
                 id: isEditing.value ? editingId.value : Date.now(),
                 item: form.value.item, hkd: form.value.amount * currentRate.value,
                 payer: form.value.payer, involved: [...form.value.involved],
                 origAmount: form.value.amount, origCurrency: form.value.currency
             };
-
             if(isEditing.value) {
                 const idx = expenses.value.findIndex(e => e.id === editingId.value);
                 if(idx !== -1) expenses.value[idx] = exp;
@@ -366,7 +350,6 @@ createApp({
                 const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`);
                 const data = await res.json();
                 currentRate.value = data.rates.HKD || 1;
-                rateTime.value = new Date().toLocaleTimeString();
             } catch (e) {}
         };
 
@@ -401,11 +384,10 @@ createApp({
 
         return {
             eventName, users, expenses, newUser, form, isEditing, editingId, errors, showSyncModal, syncTab, showShareModal, showDetails,
-            totalSpent, settlements, roomId, roomInput, generatedRoomId, lastSyncTime, isSyncing, daysRemaining, currentRate, rateTime, validRecentRooms,
-            addUser, addExpense, editExpense, cancelEdit, joinRoom, createRoom, resetAll, manualSync,
+            totalSpent, settlements, roomId, roomInput, generatedRoomId, lastSyncTime, isSyncing, daysRemaining, currentRate, validRecentRooms,
+            addUser, addExpense, editExpense, cancelEdit, joinRoom, createRoom, resetAll, manualSync, appendDate,
             renewRoom: () => { saveData(); alert("已續期"); },
             toggleSelectAll: () => { form.value.involved = form.value.involved.length === users.value.length ? [] : [...users.value] },
-            appendDate: (e) => { if(e.target.value) eventName.value += " " + e.target.value; saveData(); },
             copyText: () => {
                 let msg = `【${eventName.value || '數神結算'}】\n總額: $${totalSpent.value.toFixed(1)}\n\n`;
                 settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
