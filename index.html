@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數神 MathGod - 完整正式版</title>
+    <title>數神 MathGod</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,9 +18,7 @@
         .evergreen-gradient { background: linear-gradient(135deg, #059669 0%, #064e3b 100%); }
         .card-bg { background-color: #1e1e1e; border: 1px solid rgba(255,255,255,0.05); }
         .input-bg { background-color: #2d2d2d; border: 1px solid rgba(255,255,255,0.1); color: white; }
-        .status-badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
-        .status-online { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
-        .status-offline { background: #374151; color: #9ca3af; border: 1px solid #4b5563; }
+        .status-badge { font-size: 10px; padding: 4px 12px; border-radius: 20px; font-weight: bold; background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
         input[type="date"]::-webkit-inner-spin-button, input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; -webkit-appearance: none; }
     </style>
 </head>
@@ -34,10 +32,8 @@
                 <i class="fas fa-bolt mr-1 text-yellow-400"></i>數神
             </h1>
             <div class="flex flex-col items-end gap-1">
-                <div :class="isOnline ? 'status-online' : 'status-offline'" class="status-badge">
-                    {{ isOnline ? '同步模式: 房間 ' + roomId : '單機模式' }}
-                </div>
-                <button v-if="!isOnline" @click="openSyncModal" class="text-[10px] bg-white/20 px-2 py-1 rounded-lg font-bold">進入同步模式</button>
+                <div v-if="isOnline" class="status-badge">房間: {{ roomId }}</div>
+                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:bg-white/30 transition-all">進入同步模式</button>
             </div>
         </div>
 
@@ -140,23 +136,22 @@
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6" @click.self="showSyncModal = false">
         <div class="card-bg w-full max-w-sm rounded-3xl p-6 border border-white/10">
             <h3 class="text-emerald-500 font-bold mb-2 flex items-center gap-2"><i class="fas fa-sync"></i> 進入同步房間</h3>
-            <p class="text-gray-500 text-[10px] mb-4">輸入 4 位房間號碼與朋友同時記帳</p>
+            <p class="text-gray-500 text-[10px] mb-4">輸入 4 位號碼，與朋友同時記帳</p>
             <input type="tel" v-model="roomInput" class="input-bg w-full text-center text-3xl font-mono py-4 rounded-xl mb-4 tracking-[0.5em]" placeholder="0000" maxlength="4">
             <button @click="joinRoom" class="bg-emerald-600 w-full py-4 rounded-xl font-bold text-sm">開始同步</button>
-            <button @click="showSyncModal = false" class="w-full text-center text-gray-500 text-xs mt-4">取消</button>
         </div>
     </div>
 
     <div v-if="showShareModal" class="fixed inset-0 bg-black/95 z-50 flex flex-col p-4 overflow-y-auto" @click.self="showShareModal = false">
         <div class="w-full max-w-md mx-auto mt-6">
             <div id="capture-zone" class="bg-[#121212] p-6 rounded-3xl border border-gray-800 mb-6">
-                <div class="flex justify-between items-start mb-6">
+                <div class="flex justify-between items-start mb-4">
                     <div>
-                        <h2 class="font-black text-emerald-500 text-xl">{{ eventName || '數神結算單' }}</h2>
-                        <p class="text-[10px] text-gray-500">Settlement Summary</p>
+                        <h2 class="font-black text-emerald-500 text-xl">{{ eventName || '結算如下' }}</h2>
+                        <p class="text-[10px] text-gray-500 mt-1">計完數喇！請跟住下面箭頭畀錢：</p>
                     </div>
                     <div class="text-right">
-                        <div class="text-[10px] text-gray-500 font-bold">總金額 (HKD)</div>
+                        <div class="text-[10px] text-gray-500 font-bold">總消費</div>
                         <div class="font-mono font-bold text-emerald-500 text-lg">${{ totalSpent.toFixed(1) }}</div>
                     </div>
                 </div>
@@ -188,10 +183,10 @@
                     <label for="incDetails" class="text-sm text-gray-300">包含消費詳情</label>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95">
+                    <button @click="copyText" class="bg-gray-800 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2">
                         <i class="fas fa-copy"></i> 複製結算文字
                     </button>
-                    <button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 active:scale-95">
+                    <button @click="generateImage" class="bg-emerald-600 py-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2">
                         <i class="fas fa-image"></i> 下載結算圖片
                     </button>
                 </div>
@@ -239,10 +234,11 @@ createApp({
         const totalSpent = computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0));
 
         const saveData = () => {
-            const data = { users: users.value, expenses: expenses.value, eventName: eventName.value };
+            const now = Date.now();
+            const data = { users: users.value, expenses: expenses.value, eventName: eventName.value, lastUpdate: now };
             localStorage.setItem('mathGodV4', JSON.stringify(data));
             if (isOnline.value && roomRef) {
-                roomRef.set({ ...data, lastUpdate: Date.now() });
+                roomRef.set(data);
             }
         };
 
@@ -258,10 +254,7 @@ createApp({
         };
 
         const addExpense = () => {
-            if (!form.value.item || !form.value.amount || !form.value.payer || form.value.involved.length === 0) {
-                alert("請填寫完整資料及選擇參與者");
-                return;
-            }
+            if (!form.value.item || !form.value.amount || !form.value.payer || form.value.involved.length === 0) return;
             expenses.value.unshift({
                 id: Date.now(),
                 item: form.value.item,
@@ -306,7 +299,7 @@ createApp({
         };
 
         const copyText = () => {
-            let msg = `【⚡️數神結算】${eventName.value || '清數'}\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
+            let msg = `【⚡️數神結算】${eventName.value || '結算如下'}\n計完數喇！請跟住下面箭頭畀錢：\n總消費: HKD$${totalSpent.value.toFixed(1)}\n\n`;
             settlements.value.forEach(s => msg += `${s.from} ➔ ${s.to}: $${s.amount.toFixed(1)}\n`);
             if(showDetails.value) {
                 msg += `\n--- 消費詳情 ---\n`;
@@ -318,19 +311,29 @@ createApp({
         const generateImage = async () => {
             const canvas = await html2canvas(document.getElementById('capture-zone'), { backgroundColor: '#121212', scale: 2 });
             const link = document.createElement('a');
-            link.download = `MathGod_${eventName.value || 'Settlement'}.png`;
+            link.download = `${eventName.value || '結算'}.png`;
             link.href = canvas.toDataURL();
             link.click();
         };
 
         const joinRoom = () => {
-            if(roomInput.value.length < 4) { alert("請輸入 4 位數房間號碼"); return; }
+            if(roomInput.value.length < 4) return;
             roomId.value = roomInput.value;
             showSyncModal.value = false;
             roomRef = db.ref('rooms/' + roomId.value);
+            
+            // 監聽數據
             roomRef.on('value', snap => {
                 const data = snap.val();
                 if(data) {
+                    // 檢查 30 日規則 (30 * 24 * 60 * 60 * 1000)
+                    const thirtyDays = 2592000000;
+                    if (data.lastUpdate && (Date.now() - data.lastUpdate > thirtyDays)) {
+                        roomRef.remove();
+                        alert("此房間已超過 30 日未更新，已被系統移除。");
+                        resetAll();
+                        return;
+                    }
                     users.value = data.users || [];
                     expenses.value = data.expenses || [];
                     eventName.value = data.eventName || "";
@@ -339,9 +342,10 @@ createApp({
         };
 
         const resetAll = () => {
-            if(confirm("確定清除所有紀錄？這將會清空房間及本地資料並退出同步。")) {
+            if(confirm("確定清除所有紀錄？這將會清空房間、本地資料並退出同步。")) {
                 if (isOnline.value && roomRef) {
-                    roomRef.off(); // 停止監聽
+                    roomRef.remove(); // 同時清除 Firebase 上的房間
+                    roomRef.off();
                 }
                 localStorage.removeItem('mathGodV4');
                 location.reload();
