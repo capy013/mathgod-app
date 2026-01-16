@@ -82,10 +82,15 @@
                             <input v-model.number="form.amount" type="number" placeholder="金額" :class="{'input-error': errors.amount}" class="input-bg w-full p-4 rounded-2xl text-sm text-right font-mono font-bold outline-none">
                         </div>
                     </div>
-                    <div class="flex justify-between px-2">
-                        <span v-if="form.currency !== 'HKD'" class="text-[10px] text-gray-500 italic font-mono">
-                            參考匯率: 1 {{ form.currency }} ≈ {{ currentRate.toFixed(4) }} HKD
-                        </span>
+                    <div class="flex justify-between px-2 items-start">
+                        <div v-if="form.currency !== 'HKD'" class="flex flex-col">
+                            <span class="text-[9px] text-gray-500 italic font-mono">
+                                參考匯率: 1 {{ form.currency }} ≈ {{ currentRate.toFixed(4) }} HKD
+                            </span>
+                            <span class="text-[8px] text-gray-600 font-mono">
+                                更新時間: {{ rateTime }}
+                            </span>
+                        </div>
                         <p v-if="errors.amount" class="text-[10px] text-red-400 flex-1 text-right">＊請輸入有效金額</p>
                     </div>
                 </div>
@@ -215,7 +220,9 @@ createApp({
         const form = ref({ item: "", amount: null, currency: "HKD", payer: "", involved: [] });
         const errors = ref({ item: false, amount: false, payer: false, involved: false });
         const isEditing = ref(false);
+        const editingData = ref(null); // 用於暫存正在編輯的完整原始資料
         const currentRate = ref(1);
+        const rateTime = ref("---");
         const showSyncModal = ref(false);
         const showShareModal = ref(false);
         const showDetails = ref(false);
@@ -225,7 +232,6 @@ createApp({
         const isOnline = computed(() => !!roomId.value);
         const totalSpent = computed(() => expenses.value.reduce((s, e) => s + e.hkd, 0));
 
-        // 動態驗證監聽：輸入時自動消失警告
         watch(() => form.value.item, (val) => { if(val) errors.value.item = false; });
         watch(() => form.value.amount, (val) => { if(val > 0) errors.value.amount = false; });
         watch(() => form.value.payer, (val) => { if(val) errors.value.payer = false; });
@@ -267,12 +273,21 @@ createApp({
                 origAmount: form.value.amount,
                 origCurrency: form.value.currency
             });
-            form.value.item = ""; form.value.amount = null; isEditing.value = false;
+            form.value.item = ""; form.value.amount = null; isEditing.value = false; editingData.value = null;
             saveData();
         };
 
         const editExpense = (idx) => {
-            const exp = expenses.value[idx];
+            // 如果目前正在編輯其他項目，先將舊項目放回去
+            if (isEditing.value && editingData.value) {
+                expenses.value.unshift({...editingData.value});
+                // 因為 unshift 改變了 index，重新獲取我們要編輯的項目的正確 index
+                // 但為了簡單與準確，我們根據點擊的 idx 取出目標後再整理
+            }
+            
+            const exp = expenses.value.splice(idx, 1)[0];
+            editingData.value = {...exp}; // 存儲原始對象備份
+            
             form.value = { 
                 item: exp.item, 
                 amount: exp.origAmount || exp.hkd, 
@@ -280,7 +295,7 @@ createApp({
                 payer: exp.payer, 
                 involved: [...exp.involved] 
             };
-            expenses.value.splice(idx, 1);
+            
             isEditing.value = true;
             handleCurrencyChange();
             window.scrollTo({ top: 100, behavior: 'smooth' });
@@ -309,11 +324,16 @@ createApp({
         });
 
         const handleCurrencyChange = async () => {
-            if (form.value.currency === 'HKD') { currentRate.value = 1; return; }
+            if (form.value.currency === 'HKD') { 
+                currentRate.value = 1; 
+                rateTime.value = new Date().toLocaleTimeString();
+                return; 
+            }
             try {
                 const res = await fetch(`https://open.er-api.com/v6/latest/${form.value.currency}`);
                 const data = await res.json();
                 currentRate.value = data.rates.HKD || 1;
+                rateTime.value = new Date(data.time_last_update_unix * 1000).toLocaleString();
             } catch (e) { alert("匯率更新失敗"); }
         };
 
@@ -371,7 +391,7 @@ createApp({
 
         return {
             eventName, users, expenses, newUser, form, errors, isEditing, showSyncModal, showShareModal, showDetails,
-            totalSpent, settlements, isOnline, roomId, roomInput, currentRate,
+            totalSpent, settlements, isOnline, roomId, roomInput, currentRate, rateTime,
             addUser, addExpense, editExpense, openShareModal: () => showShareModal.value = true,
             openSyncModal: () => showSyncModal.value = true,
             copyText, generateImage, joinRoom, handleCurrencyChange, saveData, resetAll,
