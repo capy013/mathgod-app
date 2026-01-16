@@ -43,12 +43,12 @@
                     </div>
                     <span class="text-[7px] text-white/40 font-mono mt-0.5">Sync: {{ lastSyncTime }}</span>
                 </div>
-                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">進入同步</button>
+                <button v-else @click="openSyncModal" class="text-[10px] bg-white/20 px-3 py-1.5 rounded-lg font-bold active:scale-95 transition-all">進入同步模式</button>
             </div>
         </div>
 
         <div class="flex gap-2 relative">
-            <input v-model="eventName" @change="saveData" type="text" placeholder="輸入活動名稱 (例: 日本之旅)" class="bg-black/20 border border-white/10 text-white flex-1 p-3 rounded-2xl text-xs outline-none font-bold">
+            <input v-model="eventName" @change="saveData" type="text" placeholder="輸入活動名稱 (例: 生日聚餐)" class="bg-black/20 border border-white/10 text-white flex-1 p-3 rounded-2xl text-xs outline-none font-bold">
             <div class="relative">
                 <button class="h-full bg-white/10 px-4 rounded-2xl border border-white/20 flex items-center justify-center"><i class="fas fa-calendar-alt text-sm"></i></button>
                 <input type="date" @change="appendDate" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10">
