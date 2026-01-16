@@ -434,7 +434,7 @@ createApp({
         };
 
         const resetAll = () => {
-            if(confirm("確定清除所有？")) {
+            if(confirm("確定清除所有資料並登出房間？")) {
                 if (isOnline.value && roomRef) roomRef.remove();
                 localStorage.removeItem('mathGodV4');
                 location.reload();
