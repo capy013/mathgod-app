@@ -144,7 +144,7 @@
     </div>
 
     <div v-if="showSyncModal" class="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-6" @click.self="showSyncModal = false">
-        <div class="card-bg w-full max-w-sm rounded-3xl p-6 border border-white/10">
+        <div class="card-bg w-full max-sm rounded-3xl p-6 border border-white/10">
             <div class="flex gap-2 mb-6 p-1 bg-black/20 rounded-xl">
                 <button @click="syncTab = 'join'" :class="syncTab === 'join' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">加入房間</button>
                 <button @click="syncTab = 'create'" :class="syncTab === 'create' ? 'bg-emerald-600 text-white' : 'text-gray-500'" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all">開新房間</button>
@@ -255,6 +255,7 @@ createApp({
         });
 
         const saveData = () => {
+            if (!users.value.length && !expenses.value.length && !eventName.value) return; // 空資料不儲存
             const now = Date.now(); lastUpdateTS.value = now;
             const data = { users: [...users.value], expenses: [...expenses.value], eventName: eventName.value, lastUpdate: now };
             localStorage.setItem('mathGodV4', JSON.stringify(data));
@@ -285,9 +286,6 @@ createApp({
             checkValidRooms();
         };
 
-        const generateRoomNumber = () => { generatedRoomId.value = Math.floor(1000 + Math.random() * 9000).toString(); };
-        generateRoomNumber();
-
         const joinRoom = () => {
             if(roomInput.value.toString().length < 4) return;
             roomId.value = roomInput.value.toString();
@@ -311,6 +309,18 @@ createApp({
             saveData(); showSyncModal.value = false;
         };
 
+        const resetAll = () => {
+            if(confirm("確定要清除紀錄？這會清除此房間的紀錄並登出房間。")) {
+                // 1. 斷開實時連接
+                if(roomRef) roomRef.off();
+                // 2. 物理清除本地儲存
+                localStorage.removeItem('mathGodV4');
+                // 3. 物理刷新頁面到初始狀態
+                window.location.replace(window.location.href.split('?')[0]);
+            }
+        };
+
+        // ...其餘功能函數(addUser, addExpense等)保持原樣...
         const handleCurrencyChange = async () => {
             if (form.value.currency === 'HKD') { currentRate.value = 1; return; }
             try {
@@ -361,21 +371,10 @@ createApp({
             return res;
         });
 
-        const resetAll = () => {
-            if(confirm("確定要清除紀錄？這會清除此房間的紀錄並登出房間。")) {
-                if(roomRef) { roomRef.off(); } // 停止 Firebase 監聽
-                // 清空內存變數
-                users.value = []; expenses.value = []; eventName.value = ""; roomId.value = null;
-                // 清除本地儲存
-                localStorage.removeItem('mathGodV4');
-                // 強制跳轉刷新，確保一切重置
-                window.location.href = window.location.pathname;
-            }
-        };
-
         onMounted(() => {
             const local = JSON.parse(localStorage.getItem('mathGodV4') || '{}');
             if(local.users) { users.value = local.users; expenses.value = local.expenses || []; eventName.value = local.eventName || ""; }
+            generatedRoomId.value = Math.floor(1000 + Math.random() * 9000).toString();
             checkValidRooms();
         });
 
